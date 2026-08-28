@@ -1,0 +1,71 @@
+name: Reportar um problema
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar. Quanto mais específico, mais rápido dá para resolver.
+
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu
+      description: Descreva o comportamento observado.
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do Quantum
+      placeholder: 'v1.0.12 (aparece na release que você baixou)'
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Versão do Windows
+      placeholder: 'Windows 11 Pro 24H2'
+    validations:
+      required: true
+
+  - type: input
+    id: dispositivo
+    attributes:
+      label: Dispositivo de áudio
+      description: Marca, modelo e como conecta (USB, P2, HDMI, Bluetooth).
+      placeholder: 'HyperX Cloud II — USB'
+
+  - type: dropdown
+    id: elevado
+    attributes:
+      label: Estava rodando como administrador?
+      options:
+        - 'Não'
+        - 'Sim'
+        - 'Não sei'
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Prints ou informações adicionais

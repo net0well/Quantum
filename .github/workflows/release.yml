@@ -1,0 +1,166 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão a publicar (vazio = calcula automaticamente)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  release:
+    name: Compilar, testar e publicar
+    runs-on: windows-latest
+    timeout-minutes: 35
+    if: "!contains(github.event.head_commit.message, '[skip release]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar o .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache do NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Calcular a versão
+        id: version
+        shell: pwsh
+        run: |
+          $manual = '${{ inputs.version }}'
+          if ($manual) {
+            $version = $manual.TrimStart('v')
+          }
+          else {
+            # major.minor vêm do Directory.Build.props; o patch é o número da execução,
+            # então toda entrada na main gera uma versão nova e crescente.
+            $props = [xml](Get-Content Directory.Build.props)
+            $base = $props.SelectSingleNode('//Version').InnerText
+            $parts = $base.Split('.')
+            $version = '{0}.{1}.{2}' -f $parts[0], $parts[1], $env:GITHUB_RUN_NUMBER
+          }
+
+          Write-Host "Versão: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Restaurar dependências
+        run: dotnet restore Quantum.slnx
+
+      - name: Compilar
+        run: dotnet build Quantum.slnx --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Executar os testes
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+          $runner = 'tests/Quantum.Audio.Tests/bin/Release/net10.0-windows/Quantum.Audio.Tests.exe'
+          & $runner -trx "$PWD/TestResults/quantum.trx"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Testes reprovados — nenhuma release será criada."
+            exit $LASTEXITCODE
+          }
+
+      - name: Publicar o executável portátil
+        run: >
+          dotnet publish src/Quantum.App/Quantum.App.csproj
+          --configuration Release
+          --output publish
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Montar os artefatos da release
+        id: package
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $version = $env:VERSION
+          $stageName = "Quantum-v$version-win-x64"
+          $stage = "artifacts/$stageName"
+
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item publish/Quantum.exe $stage/
+          Copy-Item README.md, LICENSE, CHANGELOG.md $stage/
+
+          $zip = "artifacts/$stageName.zip"
+          Compress-Archive -Path "$stage/*" -DestinationPath $zip -Force
+
+          # Checksums para quem quiser conferir o download.
+          $lines = foreach ($file in @('publish/Quantum.exe', $zip)) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            "$hash  $(Split-Path $file -Leaf)"
+          }
+          $lines | Set-Content artifacts/checksums-sha256.txt -Encoding utf8
+
+          $mb = [Math]::Round((Get-Item publish/Quantum.exe).Length / 1MB, 1)
+          Write-Host "Quantum.exe: $mb MB"
+          "zip=$zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sizeMb=$mb" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Guardar os artefatos da execução
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum-v${{ steps.version.outputs.version }}
+          path: |
+            publish/Quantum.exe
+            artifacts/*.zip
+            artifacts/checksums-sha256.txt
+          retention-days: 90
+
+      - name: Criar a release no GitHub
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SIZE_MB: ${{ steps.package.outputs.sizeMb }}
+        run: |
+          $version = $env:VERSION
+          $tag = "v$version"
+
+          $notes = @"
+          ## Download
+
+          | Arquivo | Para quem |
+          |---|---|
+          | ``Quantum.exe`` | Baixe, execute. Não instala nada, não precisa de .NET. ($env:SIZE_MB MB) |
+          | ``Quantum-$tag-win-x64.zip`` | O mesmo executável com README, licença e changelog |
+          | ``checksums-sha256.txt`` | Conferência de integridade dos downloads |
+
+          Requer Windows 10 (1809+) ou Windows 11, 64 bits.
+
+          > O Windows SmartScreen pode avisar sobre um executável sem assinatura digital.
+          > É esperado: o binário não é assinado por certificado pago. Em **Mais informações → Executar assim mesmo**.
+          "@
+
+          $notes | Set-Content release-notes.md -Encoding utf8
+
+          gh release create $tag `
+            "publish/Quantum.exe#Quantum.exe (executável portátil)" `
+            "artifacts/Quantum-$tag-win-x64.zip#Pacote completo (zip)" `
+            "artifacts/checksums-sha256.txt#Checksums SHA-256" `
+            --title "Quantum $tag" `
+            --notes-file release-notes.md `
+            --generate-notes

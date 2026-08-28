@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Quantum.Audio/Quantum.Audio.csproj" />
+    <Project Path="src/Quantum.App/Quantum.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Quantum.Audio.Tests/Quantum.Audio.Tests.csproj" />
+  </Folder>
+</Solution>

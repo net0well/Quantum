@@ -1,0 +1,24 @@
+name: Sugerir um recurso
+description: Uma ideia para o Quantum
+labels: [melhoria]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema isso resolve
+      description: Comece pelo incômodo, não pela solução.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: O que você imagina
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Já tentou resolver de outro jeito?
+      description: Inclusive fora do Quantum — pelo painel do Windows, por exemplo.

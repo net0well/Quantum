@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Quantum.Audio</RootNamespace>
+    <AssemblyName>Quantum.Audio</AssemblyName>
+    <Description>Camada de acesso ao Windows Core Audio: dispositivos, volume por canal, qualidade, áudio espacial e perfis.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Quantum.Audio.Tests" />
+  </ItemGroup>
+
+</Project>

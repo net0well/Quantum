@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <!-- Só pelo NotifyIcon da bandeja: é a API de tray mais estável do Windows. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Quantum.App</RootNamespace>
+    <AssemblyName>Quantum</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\quantum.ico</ApplicationIcon>
+    <!-- WFO0003 pede para tirar o DPI do manifesto e usar a API do WinForms. Aqui quem
+         desenha é o WPF, que precisa das entradas de DPI no manifesto. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <Description>Central de áudio do Windows: balanço por canal, qualidade, áudio espacial e perfis.</Description>
+
+    <!-- Publicação portátil: um único .exe que roda em qualquer Windows x64 -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>pt-BR;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- O app passa a maior parte do tempo ocioso na bandeja: GC de estação de
+         trabalho, não concorrente, é o perfil que gasta menos memória e menos threads. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+    <AutoreleasePoolSupport>false</AutoreleasePoolSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Os usings implícitos do WinForms colidem com os do WPF (Application, Color,
+         MessageBox...). O único arquivo que usa WinForms importa o que precisa. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Quantum.Audio\Quantum.Audio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\quantum.ico" />
+  </ItemGroup>
+
+</Project>

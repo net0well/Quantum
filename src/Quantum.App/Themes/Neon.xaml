@@ -1,0 +1,621 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ================= Paleta neon ================= -->
+    <Color x:Key="NeonVioletColor">#FF8B5CFF</Color>
+    <Color x:Key="NeonCyanColor">#FF22D3EE</Color>
+    <Color x:Key="NeonPinkColor">#FFFF4D9D</Color>
+    <Color x:Key="HudBgColor">#FF06080D</Color>
+    <Color x:Key="HudSurfaceColor">#FF0F1420</Color>
+
+    <SolidColorBrush x:Key="HudBg" Color="{StaticResource HudBgColor}" />
+    <SolidColorBrush x:Key="HudSurface" Color="{StaticResource HudSurfaceColor}" />
+    <SolidColorBrush x:Key="HudSurfaceHi" Color="#FF161D2C" />
+    <SolidColorBrush x:Key="HudBorder" Color="#FF1E2739" />
+    <SolidColorBrush x:Key="NeonViolet" Color="{StaticResource NeonVioletColor}" />
+    <SolidColorBrush x:Key="NeonCyan" Color="{StaticResource NeonCyanColor}" />
+    <SolidColorBrush x:Key="NeonPink" Color="{StaticResource NeonPinkColor}" />
+    <SolidColorBrush x:Key="HudText" Color="#FFE6EDF7" />
+    <SolidColorBrush x:Key="HudTextDim" Color="#FF7D8AA1" />
+    <SolidColorBrush x:Key="HudTextFaint" Color="#FF4E596E" />
+    <SolidColorBrush x:Key="HudTrack" Color="#FF1A2233" />
+    <SolidColorBrush x:Key="HudOk" Color="#FF2DE0A5" />
+    <SolidColorBrush x:Key="HudWarn" Color="#FFFFB020" />
+    <SolidColorBrush x:Key="HudDanger" Color="#FFFF4D6A" />
+
+    <LinearGradientBrush x:Key="NeonGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource NeonVioletColor}" Offset="0" />
+        <GradientStop Color="{StaticResource NeonCyanColor}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeonGradientV" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource NeonVioletColor}" Offset="0" />
+        <GradientStop Color="{StaticResource NeonCyanColor}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Acentos do WPF-UI redirecionados para o neon do Quantum -->
+    <SolidColorBrush x:Key="SystemAccentColorPrimaryBrush" Color="{StaticResource NeonVioletColor}" />
+    <SolidColorBrush x:Key="SystemAccentColorSecondaryBrush" Color="{StaticResource NeonCyanColor}" />
+    <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="{StaticResource NeonVioletColor}" />
+    <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FF7A4EF0" />
+    <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="{StaticResource NeonCyanColor}" />
+    <SolidColorBrush x:Key="ApplicationBackgroundBrush" Color="{StaticResource HudBgColor}" />
+
+    <!-- Fundo quadriculado discreto de HUD -->
+    <DrawingBrush x:Key="HudGrid" TileMode="Tile" Viewport="0,0,34,34"
+                  ViewportUnits="Absolute" Opacity="0.5">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing>
+                <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <RectangleGeometry Rect="0,0,34,1" />
+                        <RectangleGeometry Rect="0,0,1,34" />
+                    </GeometryGroup>
+                </GeometryDrawing.Geometry>
+                <GeometryDrawing.Brush>
+                    <SolidColorBrush Color="#FF141C2B" />
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- Máscara de segmentos: transforma barras contínuas em medidor de LEDs -->
+    <DrawingBrush x:Key="SegmentMask" TileMode="Tile" Viewport="0,0,6,1"
+                  ViewportUnits="Absolute" Stretch="None">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Brush="White">
+                <GeometryDrawing.Geometry>
+                    <RectangleGeometry Rect="0,0,4,40" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- ================= Tipografia ================= -->
+    <Style x:Key="HudTitle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style x:Key="HudSectionTitle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource NeonCyan}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+
+    <Style x:Key="HudCaption" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource HudTextDim}" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="17" />
+    </Style>
+
+    <Style x:Key="HudValue" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource NeonCyan}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
+    </Style>
+
+    <Style x:Key="HudValueDim" TargetType="TextBlock" BasedOn="{StaticResource HudValue}">
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+    </Style>
+
+    <!-- ================= Ícones vetoriais =================
+         Emoji não serve aqui: o Segoe UI Emoji desenha em cores próprias e vários
+         glifos (fone, claquete, microfone) são pretos — somem no fundo escuro.
+         Traçado em 24x24, colorido pelo Stroke, sempre visível. -->
+    <PathGeometry x:Key="IconHeadphones"
+                  Figures="M4 15 V12 A8 8 0 0 1 20 12 V15 M2.5 15 H6.5 V20 H2.5 Z M17.5 15 H21.5 V20 H17.5 Z" />
+
+    <PathGeometry x:Key="IconSpeaker"
+                  Figures="M3 9.5 H6.5 L11 5.5 V18.5 L6.5 14.5 H3 Z M14.5 9.5 A4 4 0 0 1 14.5 14.5 M17.5 6.5 A8 8 0 0 1 17.5 17.5" />
+
+    <PathGeometry x:Key="IconMonitor"
+                  Figures="M3 5 H21 V16.5 H3 Z M9.5 20.5 H14.5 M12 16.5 V20.5" />
+
+    <PathGeometry x:Key="IconMicrophone"
+                  Figures="M12 3 A3 3 0 0 1 15 6 V11 A3 3 0 0 1 9 11 V6 A3 3 0 0 1 12 3 Z M5.5 10.5 A6.5 6.5 0 0 0 18.5 10.5 M12 17.5 V21 M8.5 21 H15.5" />
+
+    <PathGeometry x:Key="IconDigital"
+                  Figures="M3 12 A9 9 0 0 1 21 12 A9 9 0 0 1 3 12 Z M8 12 A4 4 0 0 1 16 12 A4 4 0 0 1 8 12 Z" />
+
+    <PathGeometry x:Key="IconAudio"
+                  Figures="M3 9.5 H6.5 L11 5.5 V18.5 L6.5 14.5 H3 Z M14.5 9.5 A4 4 0 0 1 14.5 14.5" />
+
+    <PathGeometry x:Key="IconTarget"
+                  Figures="M3.5 12 A8.5 8.5 0 0 1 20.5 12 A8.5 8.5 0 0 1 3.5 12 Z M8.5 12 A3.5 3.5 0 0 1 15.5 12 A3.5 3.5 0 0 1 8.5 12 Z M12 1 V4.5 M12 19.5 V23 M1 12 H4.5 M19.5 12 H23" />
+
+    <PathGeometry x:Key="IconFilm"
+                  Figures="M3 6 H21 V19 H3 Z M3 10.5 H21 M7.5 6 L5.5 10.5 M12.5 6 L10.5 10.5 M17.5 6 L15.5 10.5" />
+
+    <PathGeometry x:Key="IconNote"
+                  Figures="M6 17.5 A2.5 2.5 0 0 1 11 17.5 A2.5 2.5 0 0 1 6 17.5 Z M15.5 15.5 A2.5 2.5 0 0 1 20.5 15.5 A2.5 2.5 0 0 1 15.5 15.5 Z M11 17.5 V5.5 L20.5 3.5 V15.5 M11 9 L20.5 7" />
+
+    <Style x:Key="HudIcon" TargetType="Path">
+        <Setter Property="Stroke" Value="{StaticResource NeonCyan}" />
+        <Setter Property="StrokeThickness" Value="1.5" />
+        <Setter Property="StrokeStartLineCap" Value="Round" />
+        <Setter Property="StrokeEndLineCap" Value="Round" />
+        <Setter Property="StrokeLineJoin" Value="Round" />
+        <Setter Property="Fill" Value="Transparent" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="Width" Value="21" />
+        <Setter Property="Height" Value="21" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!-- ================= Cartão HUD ================= -->
+    <Style x:Key="HudCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource HudSurface}" />
+        <Setter Property="BorderBrush" Value="{StaticResource HudBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="18,16" />
+        <Setter Property="Margin" Value="0,0,0,14" />
+    </Style>
+
+    <!-- Faixa neon usada no topo dos cartões -->
+    <Style x:Key="HudAccentBar" TargetType="Border">
+        <Setter Property="Height" Value="2" />
+        <Setter Property="Background" Value="{StaticResource NeonGradient}" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <!-- ================= Botões ================= -->
+    <Style x:Key="HudButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+        <Setter Property="Background" Value="#FF141B29" />
+        <Setter Property="BorderBrush" Value="{StaticResource HudBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="2" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#FF1D2740" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                            <Setter Property="Foreground" Value="{StaticResource NeonCyan}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.35" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudButtonPrimary" TargetType="Button" BasedOn="{StaticResource HudButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{StaticResource NeonGradient}"
+                            CornerRadius="2" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextBlock.Foreground="#FF070A11"
+                                          TextBlock.FontWeight="Bold" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="{StaticResource NeonCyanColor}" BlurRadius="16"
+                                                      ShadowDepth="0" Opacity="0.85" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Alternador segmentado SAÍDA / ENTRADA -->
+    <Style x:Key="HudSegment" TargetType="RadioButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Chrome" Background="Transparent" CornerRadius="2" Padding="14,7"
+                            BorderBrush="Transparent" BorderThickness="0,0,0,2">
+                        <ContentPresenter x:Name="Body" HorizontalAlignment="Center"
+                                          TextBlock.Foreground="{StaticResource HudTextDim}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#FF141B29" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#FF161D2C" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonGradient}" />
+                            <Setter TargetName="Body" Property="TextBlock.Foreground" Value="{StaticResource NeonCyan}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= Slider ================= -->
+    <Style x:Key="HudSliderRepeat" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudSliderFill" TargetType="RepeatButton" BasedOn="{StaticResource HudSliderRepeat}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Grid Background="Transparent">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{StaticResource NeonGradient}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudThumb" TargetType="Thumb">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid Width="16" Height="20">
+                        <Rectangle x:Name="Body" Width="7" Height="18" RadiusX="1.5" RadiusY="1.5"
+                                   Fill="{StaticResource HudText}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Body" Property="Fill" Value="{StaticResource NeonCyan}" />
+                            <Setter TargetName="Body" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="{StaticResource NeonCyanColor}" BlurRadius="14"
+                                                      ShadowDepth="0" Opacity="0.9" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudSlider" TargetType="Slider">
+        <Setter Property="IsMoveToPointEnabled" Value="True" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center" Background="Transparent">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{StaticResource HudTrack}" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource HudSliderFill}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource HudThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource HudSliderRepeat}" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudSliderCentered" TargetType="Slider" BasedOn="{StaticResource HudSlider}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center" Background="Transparent">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{StaticResource HudTrack}" />
+                        <Border Width="2" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Background="{StaticResource HudTextFaint}" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource HudSliderRepeat}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource HudThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource HudSliderRepeat}" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= Medidor segmentado ================= -->
+    <Style x:Key="HudMeter" TargetType="ProgressBar">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Maximum" Value="100" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border Background="{StaticResource HudTrack}" CornerRadius="1"
+                                OpacityMask="{StaticResource SegmentMask}" />
+                        <Border ClipToBounds="True" CornerRadius="1">
+                            <Grid HorizontalAlignment="Left">
+                                <Rectangle x:Name="PART_Track" />
+                                <Rectangle x:Name="PART_Indicator"
+                                           Fill="{StaticResource NeonGradient}"
+                                           OpacityMask="{StaticResource SegmentMask}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= Barra de rolagem ================= -->
+    <Style x:Key="HudScrollThumb" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="Bar" Background="#FF2A3548" CornerRadius="2" Margin="3,0" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bar" Property="Background" Value="{StaticResource NeonViolet}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource HudSliderRepeat}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource HudScrollThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource HudSliderRepeat}" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter Property="Height" Value="10" />
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= Lista de dispositivos ================= -->
+    <Style x:Key="HudDeviceList" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Margin" Value="0,0,0,7" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Grid>
+                                    <Border x:Name="Chrome" Background="{StaticResource HudSurface}"
+                                            BorderBrush="{StaticResource HudBorder}" BorderThickness="1"
+                                            CornerRadius="3" Padding="13,11,13,11" />
+                                    <Border x:Name="Edge" Width="3" HorizontalAlignment="Left"
+                                            Background="{StaticResource NeonGradientV}" Opacity="0"
+                                            CornerRadius="3,0,0,3" />
+                                    <ContentPresenter Margin="16,11,13,11" />
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="{StaticResource HudSurfaceHi}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="#FF172031" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="#FF33415C" />
+                                        <Setter TargetName="Edge" Property="Opacity" Value="1" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= ComboBox ================= -->
+    <Style x:Key="HudComboToggle" TargetType="ToggleButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ClickMode" Value="Press" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Chrome" Background="#FF141B29"
+                            BorderBrush="{StaticResource HudBorder}" BorderThickness="1"
+                            CornerRadius="2" Padding="11,8">
+                        <Grid>
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"
+                                              Margin="0,0,22,0" />
+                            <Path HorizontalAlignment="Right" VerticalAlignment="Center"
+                                  Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource NeonCyan}"
+                                  StrokeThickness="1.6" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HudCombo" TargetType="ComboBox">
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Style="{StaticResource HudComboToggle}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              TextBlock.Foreground="{StaticResource HudText}" />
+                        </ToggleButton>
+                        <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
+                               AllowsTransparency="True" PopupAnimation="Fade" Focusable="False">
+                            <Border Background="#FF111827" BorderBrush="#FF33415C" BorderThickness="1"
+                                    CornerRadius="2" Margin="0,4,0,0"
+                                    MinWidth="{TemplateBinding ActualWidth}">
+                                <ScrollViewer MaxHeight="280">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Foreground" Value="{StaticResource HudText}" />
+                    <Setter Property="Padding" Value="11,9" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="Chrome" Background="Transparent" CornerRadius="2"
+                                        Padding="{TemplateBinding Padding}" BorderThickness="2,0,0,0"
+                                        BorderBrush="Transparent">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="#FF1B2437" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="#FF232E48" />
+                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonViolet}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= Switch ================= -->
+    <Style x:Key="HudSwitch" TargetType="CheckBox">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Rail" Width="40" Height="20" CornerRadius="2"
+                                Background="{StaticResource HudTrack}"
+                                BorderBrush="{StaticResource HudBorder}" BorderThickness="1">
+                            <Rectangle x:Name="Knob" Width="14" Height="12" RadiusX="1" RadiusY="1"
+                                       Fill="{StaticResource HudTextDim}"
+                                       HorizontalAlignment="Left" Margin="3,0,0,0" />
+                        </Border>
+                        <ContentPresenter VerticalAlignment="Center" Margin="11,0,0,0" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Rail" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                            <Setter TargetName="Knob" Property="Fill" Value="{StaticResource NeonGradient}" />
+                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                            <Setter TargetName="Knob" Property="Margin" Value="0,0,3,0" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Rail" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================= TextBox ================= -->
+    <Style x:Key="HudTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="#FF141B29" />
+        <Setter Property="Foreground" Value="{StaticResource HudText}" />
+        <Setter Property="CaretBrush" Value="{StaticResource NeonCyan}" />
+        <Setter Property="BorderBrush" Value="{StaticResource HudBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource NeonCyan}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,23 @@
+<Application x:Class="Quantum.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:Quantum.App.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="Themes/Neon.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+            <conv:StatusBrushConverter x:Key="StatusBrush" />
+            <conv:AvailabilityOpacityConverter x:Key="AvailabilityOpacity" />
+            <conv:SeverityBrushConverter x:Key="SeverityBrush" />
+            <conv:EnumEqualsConverter x:Key="EnumEquals" />
+            <conv:IconGeometryConverter x:Key="IconGeometry" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: Build e testes
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar o .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache do NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar dependências
+        run: dotnet restore Quantum.slnx
+
+      - name: Compilar
+        # Directory.Build.props liga TreatWarningsAsErrors: qualquer aviso reprova o PR.
+        run: dotnet build Quantum.slnx --configuration Release --no-restore
+
+      - name: Executar os testes
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+          $runner = 'tests/Quantum.Audio.Tests/bin/Release/net10.0-windows/Quantum.Audio.Tests.exe'
+          & $runner -trx "$PWD/TestResults/quantum.trx"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Testes reprovados (código $LASTEXITCODE)."
+            exit $LASTEXITCODE
+          }
+
+      - name: Publicar o relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultado-dos-testes
+          path: TestResults/*.trx
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Verificar que o executável portátil ainda gera
+        # Falhas de publicação (single-file, self-contained, trimming) não aparecem
+        # em um build comum — melhor descobrir no PR do que na release.
+        run: dotnet publish src/Quantum.App/Quantum.App.csproj --configuration Release --output artifacts/smoke
+
+      - name: Conferir o executável
+        shell: pwsh
+        run: |
+          $exe = Get-Item artifacts/smoke/Quantum.exe -ErrorAction Stop
+          $mb = [Math]::Round($exe.Length / 1MB, 1)
+          Write-Host "Quantum.exe gerado com $mb MB."
+          if ($exe.Length -lt 10MB) {
+            Write-Error 'O executável saiu pequeno demais — a publicação provavelmente quebrou.'
+            exit 1
+          }
