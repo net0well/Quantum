@@ -2,6 +2,7 @@ using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
 using Quantum.Audio.Profiles;
 using Quantum.Audio.Spatial;
+using Quantum.Audio.Storage;
 using Quantum.Audio.SystemAudio;
 using Xunit;
 
@@ -9,11 +10,11 @@ namespace Quantum.Audio.Tests;
 
 public class ProfileTests : IDisposable
 {
-    private readonly string _storagePath =
-        Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}", "profiles.json");
+    private readonly IAppPaths _paths =
+        new AppPaths(Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}"));
 
     private ProfileService CreateService() =>
-        new(new StubDevices(), new StubSpatial(), new StubSystem(), _storagePath);
+        new(new StubDevices(), new StubSpatial(), new StubSystem(), _paths);
 
     [Fact]
     public void Perfil_de_fps_desliga_espacial_e_ducking()
@@ -111,10 +112,9 @@ public class ProfileTests : IDisposable
 
     public void Dispose()
     {
-        var directory = Path.GetDirectoryName(_storagePath);
-        if (directory is not null && Directory.Exists(directory))
+        if (Directory.Exists(_paths.Root))
         {
-            Directory.Delete(directory, recursive: true);
+            Directory.Delete(_paths.Root, recursive: true);
         }
     }
 

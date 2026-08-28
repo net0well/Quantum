@@ -7,9 +7,10 @@ namespace Quantum.App.Views;
 
 public partial class MainWindow : FluentWindow
 {
-    public MainWindow()
+    public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+        DataContext = viewModel;
 
         IsVisibleChanged += (_, _) => UpdateMeters();
         StateChanged += (_, _) => UpdateMeters();

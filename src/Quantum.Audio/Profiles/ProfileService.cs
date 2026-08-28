@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
 using Quantum.Audio.Spatial;
+using Quantum.Audio.Storage;
 using Quantum.Audio.SystemAudio;
 
 namespace Quantum.Audio.Profiles;
@@ -28,16 +29,12 @@ public sealed class ProfileService : IProfileService
         IAudioDeviceService devices,
         ISpatialAudioService spatial,
         ISystemAudioService system,
-        string? storagePath = null)
+        IAppPaths paths)
     {
         _devices = devices;
         _spatial = spatial;
         _system = system;
-
-        StoragePath = storagePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Quantum",
-            "profiles.json");
+        StoragePath = paths.ProfilesFile;
     }
 
     public string StoragePath { get; }

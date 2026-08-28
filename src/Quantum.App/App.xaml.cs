@@ -1,29 +1,33 @@
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
+using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Quantum.App.Services;
 using Quantum.App.ViewModels;
 using Quantum.App.Views;
-using Quantum.Audio.Devices;
-using Quantum.Audio.Drivers;
+using Quantum.Audio;
 using Quantum.Audio.Health;
-using Quantum.Audio.Profiles;
-using Quantum.Audio.Quality;
-using Quantum.Audio.Spatial;
-using Quantum.Audio.SystemAudio;
+using Quantum.Audio.Storage;
+using Serilog;
+using Serilog.Events;
 
 namespace Quantum.App;
 
 /// <summary>
-/// Raiz de composição. O grafo é pequeno e fixo, então a montagem é explícita —
-/// um contêiner de DI aqui só acrescentaria indireção.
+/// Raiz de composição. Usa um <see cref="ServiceCollection"/> puro em vez do Generic Host:
+/// o app é uma janela e um ícone de bandeja, e o maquinário de hosted services só
+/// acrescentaria peso a um processo que precisa ficar inerte em segundo plano.
 /// </summary>
 public partial class App : Application
 {
-    private AudioDeviceService? _deviceService;
-    private MainViewModel? _viewModel;
+    private ServiceProvider? _services;
     private TrayIconService? _tray;
+    private MainViewModel? _viewModel;
     private MainWindow? _window;
-    private AppSettingsService? _settings;
+    private IAppSettingsService? _settings;
+    private ILogger<App>? _log;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -32,21 +36,19 @@ public partial class App : Application
         // A janela pode ficar escondida na bandeja, então o encerramento é explícito.
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        var settings = new AppSettingsService();
+        var paths = new AppPaths();
+        paths.EnsureCreated();
+        ConfigureLogging(paths);
 
-        _deviceService = new AudioDeviceService();
-        var quality = new AudioQualityService();
-        var spatial = new SpatialAudioService();
-        var drivers = new DriverService();
-        var system = new SystemAudioService();
-        var profiles = new ProfileService(_deviceService, spatial, system);
-        var applier = new ProfileApplier(_deviceService, quality, spatial, system);
-        var health = new HealthMonitor(_deviceService, spatial, system);
+        _services = BuildServices(paths);
+        _log = _services.GetRequiredService<ILogger<App>>();
+        _settings = _services.GetRequiredService<IAppSettingsService>();
+        _viewModel = _services.GetRequiredService<MainViewModel>();
 
-        _viewModel = new MainViewModel(
-            _deviceService, quality, spatial, drivers, system, profiles, applier, health, settings);
+        _log.LogInformation("Quantum iniciado. Versão {Version}",
+            typeof(App).Assembly.GetName().Version?.ToString() ?? "desconhecida");
 
-        _tray = new TrayIconService();
+        _tray = _services.GetRequiredService<TrayIconService>();
         _tray.OpenRequested += (_, _) => ShowWindow();
         _tray.CheckupRequested += (_, _) => RunCheckupFromTray();
         _tray.ExitRequested += (_, _) => Shutdown();
@@ -54,15 +56,14 @@ public partial class App : Application
         _viewModel.IssueDetected += OnIssueDetected;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        _settings = settings;
-
-        var startHidden = settings.Current.StartMinimized ||
+        var startHidden = _settings.Current.StartMinimized ||
                           e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase);
 
         if (startHidden)
         {
             // A janela nem chega a ser construída: em segundo plano não há árvore
-            // visual, nem BAML carregado, nem renderização — só o serviço e a bandeja.
+            // visual, nem BAML carregado, nem renderização — só os serviços e a bandeja.
+            _log.LogInformation("Iniciando minimizado na bandeja.");
             _tray.SetTooltip("Quantum — rodando em segundo plano");
             MemoryTrimmer.Trim();
         }
@@ -80,12 +81,56 @@ public partial class App : Application
         {
             _viewModel.IssueDetected -= OnIssueDetected;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-            _viewModel.Dispose();
         }
 
-        _tray?.Dispose();
-        _deviceService?.Dispose();
+        _log?.LogInformation("Quantum encerrado.");
+
+        // O provedor descarta os singletons que implementam IDisposable —
+        // serviço de dispositivos, view model e bandeja saem junto.
+        _services?.Dispose();
+        Log.CloseAndFlush();
+
         base.OnExit(e);
+    }
+
+    private ServiceProvider BuildServices(IAppPaths paths)
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton(paths);
+        services.AddQuantumAudio();
+
+        services.AddLogging(builder =>
+        {
+            builder.ClearProviders();
+            builder.AddSerilog(dispose: false);
+        });
+
+        services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<TrayIconService>();
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainWindow>();
+
+        return services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true,
+        });
+    }
+
+    private static void ConfigureLogging(IAppPaths paths)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                Path.Combine(paths.LogsFolder, "quantum-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                fileSizeLimitBytes: 5 * 1024 * 1024,
+                restrictedToMinimumLevel: LogEventLevel.Information,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+            .WriteTo.Debug()
+            .CreateLogger();
     }
 
     /// <summary>A janela é criada na primeira vez que alguém pede para vê-la.</summary>
@@ -93,12 +138,8 @@ public partial class App : Application
     {
         if (_window is null)
         {
-            _window = new MainWindow
-            {
-                DataContext = _viewModel,
-                HideInsteadOfClose = _settings?.Current.MinimizeToTray ?? true,
-            };
-
+            _window = _services!.GetRequiredService<MainWindow>();
+            _window.HideInsteadOfClose = _settings?.Current.MinimizeToTray ?? true;
             MainWindow = _window;
         }
 
@@ -121,6 +162,7 @@ public partial class App : Application
 
     private void OnIssueDetected(object? sender, HealthIssue issue)
     {
+        _log?.LogWarning("Problema detectado: {Title} ({Device})", issue.Title, issue.DeviceName);
         _tray?.ShowBalloon($"Quantum — {issue.Title}", issue.Detail, true);
         UpdateTrayTooltip();
     }
@@ -149,5 +191,29 @@ public partial class App : Application
         _tray?.SetTooltip(_viewModel.IsHealthy
             ? "Quantum — áudio ok"
             : $"Quantum — {_viewModel.LastReport.Issues.Count} ponto(s) de atenção");
+    }
+
+    /// <summary>
+    /// Sem isto, uma exceção na thread de interface fecha o app sem deixar rastro.
+    /// Com log em arquivo, dá para descobrir o que houve na máquina de outra pessoa.
+    /// </summary>
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        _log?.LogError(e.Exception, "Exceção não tratada na interface.");
+        Log.CloseAndFlush();
+    }
+
+    public App()
+    {
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception exception)
+            {
+                _log?.LogCritical(exception, "Exceção não tratada fora da interface.");
+            }
+
+            Log.CloseAndFlush();
+        };
     }
 }
