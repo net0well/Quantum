@@ -7,14 +7,14 @@ namespace Quantum.App.Services;
 /// Ícone da bandeja. Usa o NotifyIcon do WinForms porque é a API de tray mais
 /// estável do Windows — o custo é apenas o assembly, sem janela nem laço extra.
 /// </summary>
-public sealed class TrayIconService : IDisposable
+public sealed class TrayIconAdapter : IDisposable
 {
     private const int MaxTooltipLength = 63;
 
     private readonly NotifyIcon _notifyIcon;
     private bool _disposed;
 
-    public TrayIconService()
+    public TrayIconAdapter()
     {
         var menu = new ContextMenuStrip
         {

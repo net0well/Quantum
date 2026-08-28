@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
 using Quantum.Audio.Profiles;
@@ -14,7 +15,8 @@ public class ProfileTests : IDisposable
         new AppPaths(Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}"));
 
     private ProfileService CreateService() =>
-        new(new StubVolumes(), new StubSpatial(), new StubSystem(), _paths);
+        new(new StubVolumes(), new StubSpatial(), new StubSystem(),
+            new JsonProfileRepository(_paths, NullLogger<JsonProfileRepository>.Instance));
 
     [Fact]
     public void Perfil_de_fps_desliga_espacial_e_ducking()

@@ -1,49 +1,31 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
 using Quantum.Audio.Spatial;
-using Quantum.Audio.Storage;
 using Quantum.Audio.SystemAudio;
 
 namespace Quantum.Audio.Profiles;
 
-/// <inheritdoc cref="IProfileService"/>
-public sealed class ProfileService : IProfileService
+/// <summary>
+/// Regras dos perfis: quais existem, o que pode ser alterado e como capturar o
+/// estado atual. A gravação em si é do <see cref="IProfileRepository"/>.
+/// </summary>
+public sealed class ProfileService(
+    IAudioVolumeController volumes,
+    ISpatialAudioService spatial,
+    ISystemAudioService system,
+    IProfileRepository repository) : IProfileService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
-    private readonly IAudioVolumeController _volume;
-    private readonly ISpatialAudioService _spatial;
-    private readonly ISystemAudioService _system;
     private readonly Lock _gate = new();
 
     private List<AudioProfile>? _custom;
 
-    public ProfileService(
-        IAudioVolumeController volume,
-        ISpatialAudioService spatial,
-        ISystemAudioService system,
-        IAppPaths paths)
-    {
-        _volume = volume;
-        _spatial = spatial;
-        _system = system;
-        StoragePath = paths.ProfilesFile;
-    }
-
-    public string StoragePath { get; }
+    public string StoragePath => repository.StoragePath;
 
     public IReadOnlyList<AudioProfile> GetProfiles()
     {
         lock (_gate)
         {
-            _custom ??= Load();
+            _custom ??= [.. repository.Load()];
             return [.. BuiltInProfiles.All, .. _custom];
         }
     }
@@ -57,10 +39,10 @@ public sealed class ProfileService : IProfileService
 
         lock (_gate)
         {
-            _custom ??= Load();
+            _custom ??= [.. repository.Load()];
             _custom.RemoveAll(p => p.Id == profile.Id);
             _custom.Add(profile);
-            return Persist();
+            return repository.Save(_custom);
         }
     }
 
@@ -68,17 +50,17 @@ public sealed class ProfileService : IProfileService
     {
         lock (_gate)
         {
-            _custom ??= Load();
+            _custom ??= [.. repository.Load()];
+
             return _custom.RemoveAll(p => p.Id == profileId) == 0
                 ? AudioResult.Fail("Perfil não encontrado.")
-                : Persist();
+                : repository.Save(_custom);
         }
     }
 
     public AudioProfile CaptureFromDevice(string deviceId, string name)
     {
-        var volume = _volume.GetVolumeState(deviceId);
-        var spatial = _spatial.GetCurrentFormat(deviceId);
+        var volume = volumes.GetVolumeState(deviceId);
 
         return new AudioProfile
         {
@@ -88,49 +70,10 @@ public sealed class ProfileService : IProfileService
             IsBuiltIn = false,
             Balance = volume.Balance,
             MasterVolume = volume.MasterScalar,
-            SpatialFormatId = spatial.Id,
+            SpatialFormatId = spatial.GetCurrentFormat(deviceId).Id,
             Quality = QualityTarget.Keep,
-            Ducking = _system.GetDuckingPreference(),
-            Mono = _system.GetMonoEnabled(),
+            Ducking = system.GetDuckingPreference(),
+            Mono = system.GetMonoEnabled(),
         };
-    }
-
-    private List<AudioProfile> Load()
-    {
-        try
-        {
-            if (!File.Exists(StoragePath))
-            {
-                return [];
-            }
-
-            var json = File.ReadAllText(StoragePath);
-            var loaded = JsonSerializer.Deserialize<List<AudioProfile>>(json, JsonOptions);
-            return loaded?.Where(p => !p.IsBuiltIn).ToList() ?? [];
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
-        {
-            // Arquivo corrompido ou inacessível: começa vazio em vez de derrubar o app.
-            return [];
-        }
-    }
-
-    private AudioResult Persist()
-    {
-        try
-        {
-            var directory = Path.GetDirectoryName(StoragePath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            File.WriteAllText(StoragePath, JsonSerializer.Serialize(_custom, JsonOptions));
-            return AudioResult.Ok("Perfil salvo.");
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return AudioResult.Fail(ex.HResult, $"Não foi possível gravar em {StoragePath}.");
-        }
     }
 }

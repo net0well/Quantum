@@ -23,7 +23,7 @@ namespace Quantum.App;
 public partial class App : Application
 {
     private ServiceProvider? _services;
-    private TrayIconService? _tray;
+    private TrayIconAdapter? _tray;
     private MainViewModel? _viewModel;
     private MainWindow? _window;
     private IAppSettingsService? _settings;
@@ -48,7 +48,7 @@ public partial class App : Application
         _log.LogInformation("Quantum iniciado. Versão {Version}",
             typeof(App).Assembly.GetName().Version?.ToString() ?? "desconhecida");
 
-        _tray = _services.GetRequiredService<TrayIconService>();
+        _tray = _services.GetRequiredService<TrayIconAdapter>();
         _tray.OpenRequested += (_, _) => ShowWindow();
         _tray.CheckupRequested += (_, _) => RunCheckupFromTray();
         _tray.ExitRequested += (_, _) => Shutdown();
@@ -107,7 +107,8 @@ public partial class App : Application
         });
 
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
-        services.AddSingleton<TrayIconService>();
+        services.AddSingleton<TrayIconAdapter>();
+        services.AddSingleton<IDeviceViewModelFactory, DeviceViewModelFactory>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
 

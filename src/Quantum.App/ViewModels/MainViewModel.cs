@@ -25,11 +25,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IAudioDeviceCatalog _catalog;
     private readonly IAudioVolumeController _volumes;
-    private readonly IAudioMeterService _meters;
-    private readonly IAudioQualityService _quality;
     private readonly ISpatialAudioService _spatial;
-    private readonly IDriverService _drivers;
     private readonly ISystemAudioService _system;
+    private readonly IDeviceViewModelFactory _deviceFactory;
     private readonly IProfileService _profiles;
     private readonly IProfileApplier _applier;
     private readonly IHealthMonitor _health;
@@ -54,11 +52,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public MainViewModel(
         IAudioDeviceCatalog catalog,
         IAudioVolumeController volumes,
-        IAudioMeterService meters,
-        IAudioQualityService quality,
         ISpatialAudioService spatial,
-        IDriverService drivers,
         ISystemAudioService system,
+        IDeviceViewModelFactory deviceFactory,
         IProfileService profiles,
         IProfileApplier applier,
         IHealthMonitor health,
@@ -66,11 +62,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         _catalog = catalog;
         _volumes = volumes;
-        _meters = meters;
-        _quality = quality;
         _spatial = spatial;
-        _drivers = drivers;
         _system = system;
+        _deviceFactory = deviceFactory;
         _profiles = profiles;
         _applier = applier;
         _health = health;
@@ -380,7 +374,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         foreach (var info in _catalog.GetDevices(_selectedKind, _showDisconnected))
         {
-            Devices.Add(new DeviceViewModel(info, _volumes, _meters, _quality, _spatial, _drivers));
+            Devices.Add(_deviceFactory.Create(info));
         }
 
         SelectedDevice = Devices.FirstOrDefault(d => d.Id == previousId)
