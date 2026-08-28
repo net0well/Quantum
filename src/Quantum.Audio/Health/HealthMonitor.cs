@@ -16,7 +16,8 @@ public interface IHealthMonitor
 /// de minuto em minuto sem aparecer no gerenciador de tarefas.
 /// </summary>
 public sealed class HealthMonitor(
-    IAudioDeviceService devices,
+    IAudioDeviceCatalog catalog,
+    IAudioVolumeController volumes,
     ISpatialAudioService spatial,
     ISystemAudioService system) : IHealthMonitor
 {
@@ -31,7 +32,7 @@ public sealed class HealthMonitor(
 
         foreach (var kind in (AudioDeviceKind[])[AudioDeviceKind.Output, AudioDeviceKind.Input])
         {
-            foreach (var device in devices.GetDevices(kind))
+            foreach (var device in catalog.GetDevices(kind))
             {
                 InspectDevice(device, issues);
             }
@@ -44,7 +45,7 @@ public sealed class HealthMonitor(
 
     private void InspectDevice(AudioDeviceInfo device, List<HealthIssue> issues)
     {
-        var volume = devices.GetVolumeState(device.Id);
+        var volume = volumes.GetVolumeState(device.Id);
         if (volume.Channels.Count == 0)
         {
             return;

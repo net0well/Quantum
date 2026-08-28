@@ -30,7 +30,7 @@ public interface IProfileApplier
 
 /// <inheritdoc cref="IProfileApplier"/>
 public sealed class ProfileApplier(
-    IAudioDeviceService devices,
+    IAudioVolumeController volume,
     IAudioQualityService quality,
     ISpatialAudioService spatial,
     ISystemAudioService system) : IProfileApplier
@@ -39,12 +39,12 @@ public sealed class ProfileApplier(
     {
         var steps = new List<ProfileApplyStep>
         {
-            new("Balanço dos canais", devices.SetBalance(deviceId, profile.Balance)),
+            new("Balanço dos canais", volume.SetBalance(deviceId, profile.Balance)),
         };
 
         if (profile.MasterVolume is { } master)
         {
-            steps.Add(new ProfileApplyStep("Volume mestre", devices.SetMasterScalar(deviceId, master)));
+            steps.Add(new ProfileApplyStep("Volume mestre", volume.SetMasterScalar(deviceId, master)));
         }
 
         if (profile.SpatialFormatId is { } spatialId)

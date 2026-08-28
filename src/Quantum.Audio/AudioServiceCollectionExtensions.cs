@@ -22,7 +22,9 @@ public static class AudioServiceCollectionExtensions
         // TryAdd: o app pode registrar caminhos próprios antes de chamar isto.
         services.TryAddSingleton<IAppPaths>(_ => new AppPaths());
 
-        services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
+        services.AddSingleton<IAudioDeviceCatalog, AudioDeviceCatalog>();
+        services.AddSingleton<IAudioVolumeController, AudioVolumeController>();
+        services.AddSingleton<IAudioMeterService, AudioMeterService>();
         services.AddSingleton<IAudioQualityService, AudioQualityService>();
         services.AddSingleton<ISpatialAudioService, SpatialAudioService>();
         services.AddSingleton<IDriverService, DriverService>();

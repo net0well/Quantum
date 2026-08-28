@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Quantum.App.Mvvm;
 using Quantum.Audio.Devices;
 using Quantum.Audio.Drivers;
@@ -11,10 +11,14 @@ namespace Quantum.App.ViewModels;
 /// <summary>Um dispositivo de saída e todos os controles que valem só para ele.</summary>
 public sealed class DeviceViewModel : ObservableObject
 {
-    private readonly IAudioDeviceService _devices;
+    private readonly IAudioVolumeController _volumes;
+    private readonly IAudioMeterService _meters;
     private readonly IAudioQualityService _quality;
     private readonly ISpatialAudioService _spatial;
     private readonly IDriverService _drivers;
+
+    /// <summary>Buffer reaproveitado: alocar um array por quadro viraria lixo a 30 Hz.</summary>
+    private readonly float[] _peakBuffer = new float[8];
 
     private VolumeState _volume = VolumeState.Empty;
     private AudioQualityFormat? _selectedFormat;
@@ -28,13 +32,15 @@ public sealed class DeviceViewModel : ObservableObject
 
     public DeviceViewModel(
         AudioDeviceInfo info,
-        IAudioDeviceService devices,
+        IAudioVolumeController volumes,
+        IAudioMeterService meters,
         IAudioQualityService quality,
         ISpatialAudioService spatial,
         IDriverService drivers)
     {
         Info = info;
-        _devices = devices;
+        _volumes = volumes;
+        _meters = meters;
         _quality = quality;
         _spatial = spatial;
         _drivers = drivers;
@@ -94,7 +100,7 @@ public sealed class DeviceViewModel : ObservableObject
                 return;
             }
 
-            Report(_devices.SetMasterScalar(Id, (float)(value / 100.0)));
+            Report(_volumes.SetMasterScalar(Id, (float)(value / 100.0)));
             RefreshVolume();
         }
     }
@@ -110,7 +116,7 @@ public sealed class DeviceViewModel : ObservableObject
                 return;
             }
 
-            Report(_devices.SetBalance(Id, (float)(value / 100.0)));
+            Report(_volumes.SetBalance(Id, (float)(value / 100.0)));
             RefreshVolume();
         }
     }
@@ -125,7 +131,7 @@ public sealed class DeviceViewModel : ObservableObject
                 return;
             }
 
-            Report(_devices.SetMuted(Id, value));
+            Report(_volumes.SetMuted(Id, value));
         }
     }
 
@@ -222,7 +228,7 @@ public sealed class DeviceViewModel : ObservableObject
             return;
         }
 
-        _volume = _devices.GetVolumeState(Id);
+        _volume = _volumes.GetVolumeState(Id);
         _suppress = true;
 
         try
@@ -256,10 +262,10 @@ public sealed class DeviceViewModel : ObservableObject
             return;
         }
 
-        var peaks = _devices.GetChannelPeaks(Id);
+        var channels = _meters.Read(Id, _peakBuffer);
         for (var i = 0; i < Channels.Count; i++)
         {
-            Channels[i].Peak = i < peaks.Length ? peaks[i] : 0;
+            Channels[i].Peak = i < channels ? _peakBuffer[i] : 0;
         }
     }
 
@@ -284,7 +290,7 @@ public sealed class DeviceViewModel : ObservableObject
 
     private void ApplyChannelLevel(int index, double percent)
     {
-        Report(_devices.SetChannelScalar(Id, index, (float)(percent / 100.0)));
+        Report(_volumes.SetChannelScalar(Id, index, (float)(percent / 100.0)));
         RefreshVolume();
     }
 

@@ -18,7 +18,7 @@ public sealed class ProfileService : IProfileService
         Converters = { new JsonStringEnumConverter() },
     };
 
-    private readonly IAudioDeviceService _devices;
+    private readonly IAudioVolumeController _volume;
     private readonly ISpatialAudioService _spatial;
     private readonly ISystemAudioService _system;
     private readonly Lock _gate = new();
@@ -26,12 +26,12 @@ public sealed class ProfileService : IProfileService
     private List<AudioProfile>? _custom;
 
     public ProfileService(
-        IAudioDeviceService devices,
+        IAudioVolumeController volume,
         ISpatialAudioService spatial,
         ISystemAudioService system,
         IAppPaths paths)
     {
-        _devices = devices;
+        _volume = volume;
         _spatial = spatial;
         _system = system;
         StoragePath = paths.ProfilesFile;
@@ -77,7 +77,7 @@ public sealed class ProfileService : IProfileService
 
     public AudioProfile CaptureFromDevice(string deviceId, string name)
     {
-        var volume = _devices.GetVolumeState(deviceId);
+        var volume = _volume.GetVolumeState(deviceId);
         var spatial = _spatial.GetCurrentFormat(deviceId);
 
         return new AudioProfile

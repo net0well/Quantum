@@ -14,7 +14,7 @@ public class ProfileTests : IDisposable
         new AppPaths(Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}"));
 
     private ProfileService CreateService() =>
-        new(new StubDevices(), new StubSpatial(), new StubSystem(), _paths);
+        new(new StubVolumes(), new StubSpatial(), new StubSystem(), _paths);
 
     [Fact]
     public void Perfil_de_fps_desliga_espacial_e_ducking()
@@ -119,16 +119,11 @@ public class ProfileTests : IDisposable
     }
 
     // ---- Dublês: a persistência de perfis não toca nos serviços de áudio ----
+    // Só o controlador de volume aparece, porque CaptureFromDevice lê o estado atual.
 
-    private sealed class StubDevices : IAudioDeviceService
+    private sealed class StubVolumes : IAudioVolumeController
     {
-        public event EventHandler? DevicesChanged { add { } remove { } }
-
         public event EventHandler<string>? VolumeChanged { add { } remove { } }
-
-        public IReadOnlyList<AudioDeviceInfo> GetDevices(AudioDeviceKind kind, bool includeDisconnected = false) => [];
-
-        public AudioDeviceInfo? GetDevice(string deviceId) => null;
 
         public VolumeState GetVolumeState(string deviceId) => VolumeState.Empty;
 
@@ -145,8 +140,6 @@ public class ProfileTests : IDisposable
         public AudioResult SetBalance(string deviceId, float balance) => AudioResult.Ok();
 
         public AudioResult CenterBalance(string deviceId) => AudioResult.Ok();
-
-        public float[] GetChannelPeaks(string deviceId) => [];
     }
 
     private sealed class StubSpatial : ISpatialAudioService
