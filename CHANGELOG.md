@@ -6,9 +6,18 @@ workflow de release — toda entrada na `main` publica uma versão nova.
 
 ## [Não lançado]
 
-## [1.0.0]
+## [1.0.5]
 
-Primeira versão.
+### Manutenção
+
+- xunit.v3 de 3.2.2 para 4.0.0
+- `actions/checkout` para v7, `actions/setup-dotnet` e `actions/cache` para v6,
+  encerrando o aviso de depreciação do Node.js 20 nos workflows
+
+## [1.0.1]
+
+Primeira versão publicada. O patch das versões é o número da execução do workflow,
+por isso a primeira release é `1.0.1` e não `1.0.0`.
 
 ### Adicionado
 
