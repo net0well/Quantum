@@ -23,6 +23,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -81,8 +82,56 @@
                 </Grid>
             </Border>
 
+            <!-- ============ Faixa de versão nova ============ -->
+            <Border Grid.Row="2" Margin="22,0,22,14" Padding="16,13"
+                    Background="{DynamicResource HudSurface}"
+                    BorderBrush="{DynamicResource NeonCyan}" BorderThickness="1"
+                    CornerRadius="3"
+                    Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Path Grid.Column="0" Style="{StaticResource HudIcon}" Width="20" Height="20"
+                              Data="{StaticResource IconDownload}"
+                              VerticalAlignment="Top" Margin="0,1,13,0" />
+
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <TextBlock Text="{Binding UpdateHeadline}" FontSize="13.5" FontWeight="Bold"
+                                       FontFamily="{StaticResource DisplayFont}"
+                                       Foreground="{DynamicResource HudText}" />
+                            <ScrollViewer MaxHeight="76" Margin="0,6,0,0"
+                                          VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding UpdateNotes}"
+                                           Style="{StaticResource HudCaption}" />
+                            </ScrollViewer>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                            <Button Content="{Binding UpdateActionLabel}"
+                                    Style="{StaticResource HudButtonPrimary}"
+                                    Padding="14,6" Margin="0,0,6,0"
+                                    Command="{Binding ApplyUpdateCommand}" />
+                            <Button Content="DEPOIS" Style="{StaticResource HudButton}" Padding="12,6"
+                                    Command="{Binding DismissUpdateCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ProgressBar Height="3" Margin="0,12,0,0" Maximum="100"
+                                 Value="{Binding UpdateProgress, Mode=OneWay}"
+                                 Foreground="{DynamicResource NeonCyan}"
+                                 Background="{DynamicResource HudTrack}"
+                                 BorderThickness="0"
+                                 Visibility="{Binding IsUpdating, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </Border>
+
             <!-- ============ Corpo: barra lateral + seção ============ -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="98" />
                     <ColumnDefinition Width="*" />
@@ -124,7 +173,7 @@
             </Grid>
 
             <!-- ============ Status ============ -->
-            <Border Grid.Row="3" Background="{DynamicResource HudStatusBar}" BorderBrush="{DynamicResource HudBorder}"
+            <Border Grid.Row="4" Background="{DynamicResource HudStatusBar}" BorderBrush="{DynamicResource HudBorder}"
                     BorderThickness="0,1,0,0" Padding="22,11">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="3" Height="14" Background="{DynamicResource NeonGradientV}"

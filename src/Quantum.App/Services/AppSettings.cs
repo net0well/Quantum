@@ -16,6 +16,9 @@ public sealed record AppSettings
 
     public AppTheme Theme { get; init; } = AppTheme.Dark;
 
+    /// <summary>Procurar versão nova ao abrir o app.</summary>
+    public bool CheckUpdatesOnStart { get; init; } = true;
+
     public static AppSettings Default { get; } = new();
 
     /// <summary>Mantém o intervalo em uma faixa que não pesa nem deixa de ser útil.</summary>

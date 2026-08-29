@@ -17,6 +17,9 @@ Write-Host "Publicando o Quantum ($Configuration) em $Output..." -ForegroundColo
 dotnet publish $project `
     --configuration $Configuration `
     --output $Output `
+    --runtime win-x64 `
+    --self-contained `
+    -p:PublishSingleFile=true `
     --nologo
 
 if ($LASTEXITCODE -ne 0) {

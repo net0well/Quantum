@@ -112,6 +112,7 @@ public partial class App : Application
 
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IUpdateService, VelopackUpdateService>();
         services.AddSingleton<TrayIconAdapter>();
         services.AddSingleton<IDeviceViewModelFactory, DeviceViewModelFactory>();
         services.AddSingleton<MainViewModel>();

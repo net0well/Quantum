@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Quantum.Audio\Quantum.Audio.csproj" />
+    <!-- Alcança a lógica pura da camada de app (formatação de notas, conversores).
+         Sem UseWPF de propósito: System.Windows.Shapes.Path colidiria com
+         System.IO.Path nos testes, e nada aqui toca em tipo do WPF. -->
+    <ProjectReference Include="..\..\src\Quantum.App\Quantum.App.csproj" />
   </ItemGroup>
 
 </Project>

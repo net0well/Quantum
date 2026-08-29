@@ -66,9 +66,15 @@ jobs:
           retention-days: 30
 
       - name: Verificar que o executável portátil ainda gera
-        # Falhas de publicação (single-file, self-contained, trimming) não aparecem
-        # em um build comum — melhor descobrir no PR do que na release.
-        run: dotnet publish src/Quantum.App/Quantum.App.csproj --configuration Release --output artifacts/smoke
+        # Falhas de publicação (single-file, self-contained) não aparecem em um
+        # build comum — melhor descobrir no PR do que na release.
+        run: >
+          dotnet publish src/Quantum.App/Quantum.App.csproj
+          --configuration Release
+          --output artifacts/smoke
+          --runtime win-x64
+          --self-contained
+          -p:PublishSingleFile=true
 
       - name: Conferir o executável
         shell: pwsh
@@ -80,3 +86,24 @@ jobs:
             Write-Error 'O executável saiu pequeno demais — a publicação provavelmente quebrou.'
             exit 1
           }
+
+      - name: Restaurar ferramentas
+        run: dotnet tool restore
+
+      - name: Verificar que o instalador ainda empacota
+        # O caminho do Velopack é diferente do portátil (sem arquivo único, para o
+        # delta valer). Quebrar só na release seria descobrir tarde demais.
+        shell: pwsh
+        run: |
+          dotnet publish src/Quantum.App/Quantum.App.csproj `
+            --configuration Release --output artifacts/installer `
+            --runtime win-x64 --self-contained -p:PublishSingleFile=false
+
+          dotnet vpk pack --packId Quantum --packVersion 0.0.1 `
+            --packDir artifacts/installer --mainExe Quantum.exe `
+            --packTitle Quantum --packAuthors net0well `
+            --icon src/Quantum.App/Assets/quantum.ico `
+            --outputDir artifacts/releases
+
+          $setup = Get-Item artifacts/releases/Quantum-win-Setup.exe -ErrorAction Stop
+          Write-Host "Setup gerado com $([Math]::Round($setup.Length / 1MB, 1)) MB."

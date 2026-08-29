@@ -34,6 +34,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly IHealthMonitor _health;
     private readonly IAppSettingsService _settings;
     private readonly IThemeService _theme;
+    private readonly IUpdateService _updates;
     private readonly IAppPaths _paths;
 
     private readonly DispatcherTimer _meterTimer;
@@ -52,6 +53,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool _showDisconnected;
     private bool _metersActive;
     private bool _suppress;
+    private UpdateCheckResult _update = UpdateCheckResult.UpToDate;
+    private bool _updateDismissed;
+    private bool _isUpdating;
+    private int _updateProgress;
 
     public MainViewModel(
         IAudioDeviceCatalog catalog,
@@ -64,6 +69,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         IHealthMonitor health,
         IAppSettingsService settings,
         IThemeService theme,
+        IUpdateService updates,
         IAppPaths paths)
     {
         _catalog = catalog;
@@ -76,6 +82,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _health = health;
         _settings = settings;
         _theme = theme;
+        _updates = updates;
         _paths = paths;
 
         Sections =
@@ -110,6 +117,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         OpenLegacyPanelCommand = new RelayCommand(_system.OpenLegacySoundPanel);
         OpenDeviceManagerCommand = new RelayCommand(_system.OpenDeviceManager);
         OpenDataFolderCommand = new RelayCommand(OpenDataFolder);
+        CheckUpdateCommand = new RelayCommand(() => _ = CheckForUpdateAsync(announce: true));
+        ApplyUpdateCommand = new RelayCommand(() => _ = ApplyUpdateAsync(), () => !IsUpdating);
+        DismissUpdateCommand = new RelayCommand(DismissUpdate);
+        OpenReleasesCommand = new RelayCommand(_updates.OpenReleasesPage);
 
         _catalog.DevicesChanged += OnDevicesChanged;
 
@@ -132,6 +143,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ConfigureCheckupTimer();
 
         RunCheckup(notify: false);
+
+        if (_settings.Current.CheckUpdatesOnStart)
+        {
+            _ = CheckForUpdateAsync(announce: false);
+        }
     }
 
     /// <summary>Disparado quando a verificação encontra algo novo digno de notificação.</summary>
@@ -216,6 +232,14 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public ICommand OpenDeviceManagerCommand { get; }
 
     public ICommand OpenDataFolderCommand { get; }
+
+    public ICommand CheckUpdateCommand { get; }
+
+    public ICommand ApplyUpdateCommand { get; }
+
+    public ICommand DismissUpdateCommand { get; }
+
+    public ICommand OpenReleasesCommand { get; }
 
     public bool IsElevated => _system.IsElevated;
 
@@ -435,6 +459,55 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public string ProfileStoragePath => _profiles.StoragePath;
 
     public string LogFolderPath => _paths.LogsFolder;
+
+    // ---------------- Atualização ----------------
+
+    public string CurrentVersion => _updates.CurrentVersion;
+
+    public bool CanSelfUpdate => _updates.CanSelfUpdate;
+
+    /// <summary>A faixa só aparece se há versão nova e o usuário ainda não a dispensou.</summary>
+    public bool HasUpdate => _update.HasUpdate && !_updateDismissed;
+
+    public string UpdateHeadline => $"Versão {_update.Version} disponível";
+
+    /// <summary>
+    /// As notas vêm em Markdown do GitHub; mostrar cru deixaria "## Download" e
+    /// "|---|---|" na cara do usuário.
+    /// </summary>
+    public string UpdateNotes
+    {
+        get
+        {
+            var text = ReleaseNotesFormatter.ToPlainText(_update.ReleaseNotes);
+            return text.Length > 0 ? text : "Esta versão não trouxe notas.";
+        }
+    }
+
+    /// <summary>Portátil não se atualiza sozinho — o botão vira "abrir downloads".</summary>
+    public string UpdateActionLabel => CanSelfUpdate ? "ATUALIZAR AGORA" : "ABRIR DOWNLOADS";
+
+    public bool IsUpdating
+    {
+        get => _isUpdating;
+        private set => SetProperty(ref _isUpdating, value);
+    }
+
+    public int UpdateProgress
+    {
+        get => _updateProgress;
+        private set => SetProperty(ref _updateProgress, value);
+    }
+
+    public bool CheckUpdatesOnStart
+    {
+        get => _settings.Current.CheckUpdatesOnStart;
+        set
+        {
+            _settings.Update(s => s with { CheckUpdatesOnStart = value });
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>Liga os medidores só quando a janela está visível — economiza CPU em background.</summary>
     public void SetMetersActive(bool active)
@@ -656,6 +729,65 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         StatusMessage = "Elevação cancelada.";
         StatusIsError = true;
+    }
+
+    /// <summary>
+    /// Procura versão nova. Silenciosa na abertura do app: se não houver nada, ou
+    /// se a internet estiver fora, ninguém precisa ficar sabendo.
+    /// </summary>
+    private async Task CheckForUpdateAsync(bool announce)
+    {
+        if (announce)
+        {
+            StatusMessage = "Procurando versão nova...";
+            StatusIsError = false;
+        }
+
+        var result = await _updates.CheckAsync();
+
+        // A checagem volta de uma thread do pool; as propriedades são da interface.
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            _update = result;
+            _updateDismissed = false;
+
+            OnPropertyChanged(nameof(HasUpdate));
+            OnPropertyChanged(nameof(UpdateHeadline));
+            OnPropertyChanged(nameof(UpdateNotes));
+
+            if (!announce)
+            {
+                return;
+            }
+
+            StatusMessage = result.HasUpdate
+                ? $"Versão {result.Version} disponível."
+                : $"Você já está na versão mais recente ({CurrentVersion}).";
+            StatusIsError = false;
+        });
+    }
+
+    private async Task ApplyUpdateAsync()
+    {
+        IsUpdating = true;
+        UpdateProgress = 0;
+
+        var progress = new Progress<int>(value =>
+            Application.Current?.Dispatcher.Invoke(() => UpdateProgress = value));
+
+        var result = await _updates.ApplyAsync(progress);
+
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            IsUpdating = false;
+            SetStatus(result);
+        });
+    }
+
+    private void DismissUpdate()
+    {
+        _updateDismissed = true;
+        OnPropertyChanged(nameof(HasUpdate));
     }
 
     private void OpenDataFolder()
