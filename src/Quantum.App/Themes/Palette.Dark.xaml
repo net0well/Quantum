@@ -1,0 +1,67 @@
+<!--
+    Paleta escura: a identidade original do Quantum.
+    Só cores moram aqui. As regras de estilo ficam em Neon.xaml e referenciam estas
+    chaves por DynamicResource, o que permite trocar a paleta inteira em tempo de
+    execução sem reiniciar o app.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="NeonVioletColor">#FF8B5CFF</Color>
+    <Color x:Key="NeonCyanColor">#FF22D3EE</Color>
+    <Color x:Key="NeonPinkColor">#FFFF4D9D</Color>
+    <Color x:Key="HudBgColor">#FF06080D</Color>
+    <Color x:Key="HudSurfaceColor">#FF0F1420</Color>
+
+    <SolidColorBrush x:Key="HudBg" Color="{StaticResource HudBgColor}" />
+    <SolidColorBrush x:Key="HudSurface" Color="{StaticResource HudSurfaceColor}" />
+    <SolidColorBrush x:Key="HudSurfaceHi" Color="#FF161D2C" />
+    <SolidColorBrush x:Key="HudSurfaceSunken" Color="#FF0C111C" />
+    <SolidColorBrush x:Key="HudControl" Color="#FF141B29" />
+    <SolidColorBrush x:Key="HudControlHover" Color="#FF1D2740" />
+    <SolidColorBrush x:Key="HudSelected" Color="#FF172031" />
+    <SolidColorBrush x:Key="HudBorder" Color="#FF1E2739" />
+    <SolidColorBrush x:Key="HudBorderStrong" Color="#FF33415C" />
+    <SolidColorBrush x:Key="NeonViolet" Color="{StaticResource NeonVioletColor}" />
+    <SolidColorBrush x:Key="NeonCyan" Color="{StaticResource NeonCyanColor}" />
+    <SolidColorBrush x:Key="NeonPink" Color="{StaticResource NeonPinkColor}" />
+    <SolidColorBrush x:Key="HudText" Color="#FFE6EDF7" />
+    <SolidColorBrush x:Key="HudTextDim" Color="#FF7D8AA1" />
+    <SolidColorBrush x:Key="HudTextFaint" Color="#FF4E596E" />
+    <SolidColorBrush x:Key="HudTrack" Color="#FF1A2233" />
+    <SolidColorBrush x:Key="HudOk" Color="#FF2DE0A5" />
+    <SolidColorBrush x:Key="HudWarn" Color="#FFFFB020" />
+    <SolidColorBrush x:Key="HudDanger" Color="#FFFF4D6A" />
+    <SolidColorBrush x:Key="HudRail" Color="#EE070A11" />
+    <SolidColorBrush x:Key="HudStatusBar" Color="#FF0A0E17" />
+    <SolidColorBrush x:Key="HudOnAccent" Color="#FF070A11" />
+
+    <LinearGradientBrush x:Key="NeonGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource NeonVioletColor}" Offset="0" />
+        <GradientStop Color="{StaticResource NeonCyanColor}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeonGradientV" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource NeonVioletColor}" Offset="0" />
+        <GradientStop Color="{StaticResource NeonCyanColor}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Fundo quadriculado discreto de HUD -->
+    <DrawingBrush x:Key="HudGrid" TileMode="Tile" Viewport="0,0,34,34"
+                  ViewportUnits="Absolute" Opacity="0.5">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing>
+                <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <RectangleGeometry Rect="0,0,34,1" />
+                        <RectangleGeometry Rect="0,0,1,34" />
+                    </GeometryGroup>
+                </GeometryDrawing.Geometry>
+                <GeometryDrawing.Brush>
+                    <SolidColorBrush Color="#FF141C2B" />
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+</ResourceDictionary>

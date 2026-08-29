@@ -1,0 +1,151 @@
+<UserControl x:Class="Quantum.App.Views.Sections.DashboardSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer Margin="20,14,18,6" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+
+            <!-- ============ Verificação ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <Grid>
+                    <Border Style="{StaticResource HudAccentBar}" Margin="-18,-16,-18,0" />
+                    <StackPanel Margin="0,4,0,0">
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="VERIFICAÇÃO DO SISTEMA"
+                                       Style="{StaticResource HudSectionTitle}" Margin="0" />
+                            <Button Content="VERIFICAR AGORA" Style="{StaticResource HudButton}"
+                                    HorizontalAlignment="Right" Padding="12,5"
+                                    Command="{Binding RunCheckupCommand}" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding HealthSummary}" Style="{StaticResource HudValueDim}"
+                                   Margin="0,0,0,4" />
+
+                        <ItemsControl ItemsSource="{Binding Issues}" Margin="0,10,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource HudSurfaceSunken}" BorderThickness="3,0,0,0"
+                                            BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                            Padding="13,10" Margin="0,0,0,7" CornerRadius="0,2,2,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding SeverityLabel}" FontSize="9"
+                                                               FontWeight="Bold" Margin="0,0,8,0"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}" />
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource HudText}" />
+                                                    <TextBlock Text="{Binding DeviceName}" FontSize="10.5"
+                                                               Margin="8,0,0,0" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource HudTextFaint}" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Detail}"
+                                                           Style="{StaticResource HudCaption}"
+                                                           Margin="0,4,0,0" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="CORRIGIR"
+                                                    Style="{StaticResource HudButtonPrimary}"
+                                                    Padding="12,5" VerticalAlignment="Center"
+                                                    Command="{Binding DataContext.FixIssueCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ============ Perfis ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="PERFIS" Style="{StaticResource HudSectionTitle}" Margin="0" />
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Style="{StaticResource HudCaption}" FontSize="10.5"
+                                   Text="Passe o mouse em um perfil para ver o porquê de cada escolha" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding Profiles}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource HudSurfaceSunken}" CornerRadius="2"
+                                        BorderBrush="{DynamicResource HudBorder}" BorderThickness="1"
+                                        Padding="15,13" Margin="0,0,11,11" Width="252"
+                                        ToolTip="{Binding Rationale}">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Style="{StaticResource HudIcon}"
+                                                  Width="18" Height="18"
+                                                  Data="{Binding Icon, Converter={StaticResource IconGeometry}}"
+                                                  Margin="0,0,10,0" />
+                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                       FontWeight="Bold"
+                                                       FontFamily="{StaticResource DisplayFont}"
+                                                       Foreground="{DynamicResource HudText}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Description}"
+                                                   Style="{StaticResource HudCaption}"
+                                                   Height="34" Margin="0,7,0,11" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="APLICAR"
+                                                    Style="{StaticResource HudButtonPrimary}"
+                                                    Padding="16,5" Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.ApplyProfileCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="EXCLUIR" Style="{StaticResource HudButton}"
+                                                    Padding="11,5"
+                                                    Visibility="{Binding IsBuiltIn, Converter={StaticResource InverseBoolToVisibility}}"
+                                                    Command="{Binding DataContext.DeleteProfileCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <Grid Width="238">
+                            <TextBox x:Name="ProfileNameBox" Style="{StaticResource HudTextBox}"
+                                     Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Nome do novo perfil" IsHitTestVisible="False"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource HudTextFaint}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=ProfileNameBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Button Content="SALVAR ESTADO ATUAL" Style="{StaticResource HudButton}"
+                                Margin="8,0,0,0" Command="{Binding SaveProfileCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

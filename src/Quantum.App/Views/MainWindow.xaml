@@ -2,18 +2,22 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 xmlns:audio="clr-namespace:Quantum.Audio.Models;assembly=Quantum.Audio"
+                 xmlns:sections="clr-namespace:Quantum.App.Views.Sections"
                  Title="Quantum"
-                 Height="860" Width="1240" MinHeight="660" MinWidth="1040"
+                 Height="880" Width="1280" MinHeight="680" MinWidth="1080"
                  WindowStartupLocation="CenterScreen"
                  WindowBackdropType="None"
                  ExtendsContentIntoTitleBar="True"
-                 Background="{StaticResource HudBg}"
+                 Background="{DynamicResource HudBg}"
                  TextOptions.TextFormattingMode="Display">
 
     <Grid>
+        <!-- O FluentWindow com backdrop "None" não honra o Background da janela: fica
+             transparente e mostra preto. Pintar aqui é o que faz o tema claro valer. -->
+        <Rectangle Fill="{DynamicResource HudBg}" IsHitTestVisible="False" />
+
         <!-- Grade de HUD ao fundo -->
-        <Rectangle Fill="{StaticResource HudGrid}" IsHitTestVisible="False" Opacity="0.55" />
+        <Rectangle Fill="{DynamicResource HudGrid}" IsHitTestVisible="False" Opacity="0.55" />
 
         <Grid>
             <Grid.RowDefinitions>
@@ -25,44 +29,47 @@
 
             <ui:TitleBar Grid.Row="0" Title="QUANTUM" ShowMaximize="True" />
 
-            <!-- ============ Cabeçalho ============ -->
-            <Border Grid.Row="1" Padding="22,4,22,16">
+            <!-- ============ Cabeçalho: contexto da seção + estado ============ -->
+            <Border Grid.Row="1" Padding="22,2,22,14">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="4" Height="34" Background="{StaticResource NeonGradientV}"
+                        <Border Width="4" Height="36" Background="{DynamicResource NeonGradientV}"
                                 Margin="0,0,14,0" />
                         <StackPanel>
-                            <TextBlock Text="CENTRAL DE ÁUDIO" Style="{StaticResource HudTitle}" />
-                            <TextBlock Style="{StaticResource HudCaption}" Margin="0,1,0,0"
-                                       Text="Balanço · Canais · Microfone · Qualidade · Espacial · Perfis" />
+                            <TextBlock Text="{Binding SectionTitle}" Style="{StaticResource HudTitle}" />
+                            <TextBlock Text="{Binding SectionSubtitle}" Style="{StaticResource HudCaption}"
+                                       Margin="0,1,0,0" />
                         </StackPanel>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="#FF141B29" BorderBrush="{StaticResource HudBorder}"
-                                BorderThickness="1" CornerRadius="2" Padding="10,5" Margin="0,0,8,0">
+                        <Border Background="{DynamicResource HudControl}" BorderBrush="{DynamicResource HudBorder}"
+                                BorderThickness="1" CornerRadius="2" Padding="10,5" Margin="0,0,8,0"
+                                ToolTip="{Binding HealthSummary}">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,7,0">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="{StaticResource HudDanger}" />
+                                            <Setter Property="Fill" Value="{DynamicResource HudDanger}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsHealthy}" Value="True">
-                                                    <Setter Property="Fill" Value="{StaticResource HudOk}" />
+                                                    <Setter Property="Fill" Value="{DynamicResource HudOk}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
                                 <TextBlock Text="{Binding LastCheckupLabel}" FontSize="10.5"
-                                           Foreground="{StaticResource HudTextDim}" VerticalAlignment="Center" />
+                                           Foreground="{DynamicResource HudTextDim}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
 
-                        <Border Background="#FF141B29" BorderBrush="{StaticResource HudBorder}"
-                                BorderThickness="1" CornerRadius="2" Padding="10,5" Margin="0,0,8,0">
+                        <Border Background="{DynamicResource HudControl}" BorderBrush="{DynamicResource HudBorder}"
+                                BorderThickness="1" CornerRadius="2" Padding="10,5" Margin="0,0,8,0"
+                                ToolTip="Trocar formato, áudio espacial e reiniciar o serviço exigem administrador">
                             <TextBlock Text="{Binding ElevationLabel}" FontSize="10.5" FontWeight="Bold"
-                                       Foreground="{StaticResource NeonCyan}" />
+                                       FontFamily="{StaticResource DisplayFont}"
+                                       Foreground="{DynamicResource NeonCyan}" />
                         </Border>
 
                         <Button Content="ELEVAR" Style="{StaticResource HudButton}" Margin="0,0,8,0"
@@ -74,513 +81,53 @@
                 </Grid>
             </Border>
 
-            <!-- ============ Corpo ============ -->
+            <!-- ============ Corpo: barra lateral + seção ============ -->
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="312" />
+                    <ColumnDefinition Width="98" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Painel de dispositivos -->
-                <Border Grid.Column="0" BorderBrush="{StaticResource HudBorder}" BorderThickness="0,1,1,0"
-                        Background="#CC080B12">
-                    <DockPanel Margin="16,14,16,14">
-                        <Border DockPanel.Dock="Top" Background="#FF0C111C"
-                                BorderBrush="{StaticResource HudBorder}" BorderThickness="1"
-                                CornerRadius="2" Margin="0,0,0,12">
-                            <UniformGrid Columns="2">
-                                <RadioButton Style="{StaticResource HudSegment}" Content="SAÍDA"
-                                             IsChecked="{Binding SelectedKind, Mode=TwoWay,
-                                                         Converter={StaticResource EnumEquals},
-                                                         ConverterParameter=Output}" />
-                                <RadioButton Style="{StaticResource HudSegment}" Content="ENTRADA"
-                                             IsChecked="{Binding SelectedKind, Mode=TwoWay,
-                                                         Converter={StaticResource EnumEquals},
-                                                         ConverterParameter=Input}" />
-                            </UniformGrid>
-                        </Border>
-
-                        <CheckBox DockPanel.Dock="Bottom" Style="{StaticResource HudSwitch}"
-                                  Content="Mostrar desconectados" Margin="2,10,0,0"
-                                  IsChecked="{Binding ShowDisconnected, Mode=TwoWay}" />
-
-                        <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                 Style="{StaticResource HudDeviceList}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <Path Grid.Column="0" Style="{StaticResource HudIcon}"
-                                              Data="{Binding Icon, Converter={StaticResource IconGeometry}}"
-                                              Margin="0,0,12,0" />
-
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource HudText}"
-                                                       FontSize="12.5" FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource HudCaption}"
-                                                       FontSize="10.5" TextTrimming="CharacterEllipsis"
-                                                       TextWrapping="NoWrap" />
-                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                                <Border Background="{StaticResource NeonGradient}" CornerRadius="2"
-                                                        Padding="6,2" Margin="0,0,5,0"
-                                                        Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibility}}">
-                                                    <TextBlock Text="PADRÃO" FontSize="8.5" FontWeight="Bold"
-                                                               Foreground="#FF070A11" />
-                                                </Border>
-                                                <Border Background="#FF161D2C" CornerRadius="2" Padding="6,2"
-                                                        BorderThickness="1" BorderBrush="{StaticResource HudBorder}">
-                                                    <TextBlock Text="{Binding StateLabel}" FontSize="8.5"
-                                                               Foreground="{StaticResource HudTextDim}" />
-                                                </Border>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
+                <Border Grid.Column="0" Background="{DynamicResource HudRail}"
+                        BorderBrush="{DynamicResource HudBorder}" BorderThickness="0,1,1,0">
+                    <ListBox ItemsSource="{Binding Sections}"
+                             SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                             Style="{StaticResource HudNavList}"
+                             Margin="8,12,8,12">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Path Style="{StaticResource HudIcon}" Width="22" Height="22"
+                                          HorizontalAlignment="Center"
+                                          Data="{Binding Icon, Converter={StaticResource IconGeometry}}" />
+                                    <TextBlock Text="{Binding Label}" HorizontalAlignment="Center"
+                                               Margin="0,5,0,0" FontSize="10.5"
+                                               FontFamily="{StaticResource DisplayFont}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource HudTextDim}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Border>
 
-                <!-- Detalhes -->
-                <ScrollViewer Grid.Column="1" Margin="20,14,18,6" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-
-                        <!-- ============ Verificação ============ -->
-                        <Border Style="{StaticResource HudCard}">
-                            <Grid>
-                                <Border Style="{StaticResource HudAccentBar}" Margin="-18,-16,-18,0" />
-                                <StackPanel Margin="0,4,0,0">
-                                    <Grid Margin="0,0,0,10">
-                                        <TextBlock Text="VERIFICAÇÃO DO SISTEMA"
-                                                   Style="{StaticResource HudSectionTitle}" Margin="0" />
-                                        <Button Content="VERIFICAR AGORA" Style="{StaticResource HudButton}"
-                                                HorizontalAlignment="Right" Padding="12,5"
-                                                Command="{Binding RunCheckupCommand}" />
-                                    </Grid>
-
-                                    <TextBlock Text="{Binding HealthSummary}" Style="{StaticResource HudValueDim}"
-                                               Margin="0,0,0,4" />
-
-                                    <ItemsControl ItemsSource="{Binding Issues}" Margin="0,10,0,0">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#FF0C111C" BorderThickness="3,0,0,0"
-                                                        BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                                        Padding="13,10" Margin="0,0,0,7" CornerRadius="0,2,2,0">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding SeverityLabel}" FontSize="9"
-                                                                           FontWeight="Bold" Margin="0,0,8,0"
-                                                                           VerticalAlignment="Center"
-                                                                           Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}" />
-                                                                <TextBlock Text="{Binding Title}" FontSize="12.5"
-                                                                           FontWeight="SemiBold"
-                                                                           Foreground="{StaticResource HudText}" />
-                                                                <TextBlock Text="{Binding DeviceName}" FontSize="10.5"
-                                                                           Margin="8,0,0,0" VerticalAlignment="Center"
-                                                                           Foreground="{StaticResource HudTextFaint}" />
-                                                            </StackPanel>
-                                                            <TextBlock Text="{Binding Detail}"
-                                                                       Style="{StaticResource HudCaption}"
-                                                                       Margin="0,4,0,0" />
-                                                        </StackPanel>
-                                                        <Button Grid.Column="1" Content="CORRIGIR"
-                                                                Style="{StaticResource HudButtonPrimary}"
-                                                                Padding="12,5" VerticalAlignment="Center"
-                                                                Command="{Binding DataContext.FixIssueCommand,
-                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" />
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- ============ Perfis ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding IsOutputSelected, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="PERFIS" Style="{StaticResource HudSectionTitle}" />
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,0,0,14"
-                                           Text="Cada perfil ajusta balanço, áudio espacial, qualidade e o comportamento durante chamadas de uma vez só. Passe o mouse para ver o porquê de cada escolha." />
-
-                                <ItemsControl ItemsSource="{Binding Profiles}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#FF0C111C" CornerRadius="2"
-                                                    BorderBrush="{StaticResource HudBorder}" BorderThickness="1"
-                                                    Padding="15,13" Margin="0,0,11,11" Width="252"
-                                                    ToolTip="{Binding Rationale}">
-                                                <StackPanel>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Path Style="{StaticResource HudIcon}"
-                                                              Width="18" Height="18"
-                                                              Data="{Binding Icon, Converter={StaticResource IconGeometry}}"
-                                                              Margin="0,0,10,0" />
-                                                        <TextBlock Text="{Binding Name}" FontSize="13"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{StaticResource HudText}"
-                                                                   VerticalAlignment="Center" />
-                                                    </StackPanel>
-                                                    <TextBlock Text="{Binding Description}"
-                                                               Style="{StaticResource HudCaption}"
-                                                               Height="34" Margin="0,7,0,11" />
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Button Content="APLICAR"
-                                                                Style="{StaticResource HudButtonPrimary}"
-                                                                Padding="16,5" Margin="0,0,6,0"
-                                                                Command="{Binding DataContext.ApplyProfileCommand,
-                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" />
-                                                        <Button Content="EXCLUIR" Style="{StaticResource HudButton}"
-                                                                Padding="11,5"
-                                                                Visibility="{Binding IsBuiltIn, Converter={StaticResource InverseBoolToVisibility}}"
-                                                                Command="{Binding DataContext.DeleteProfileCommand,
-                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" />
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <Grid Width="238">
-                                        <TextBox x:Name="ProfileNameBox" Style="{StaticResource HudTextBox}"
-                                                 Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" />
-                                        <TextBlock Text="Nome do novo perfil" IsHitTestVisible="False"
-                                                   Margin="12,0,0,0" VerticalAlignment="Center" FontSize="12"
-                                                   Foreground="{StaticResource HudTextFaint}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Text, ElementName=ProfileNameBox}" Value="">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Grid>
-                                    <Button Content="SALVAR ESTADO ATUAL" Style="{StaticResource HudButton}"
-                                            Margin="8,0,0,0" Command="{Binding SaveProfileCommand}" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Microfone ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding IsInputSelected, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="NÍVEL DE ENTRADA" Style="{StaticResource HudSectionTitle}" />
-                                <ItemsControl ItemsSource="{Binding SelectedDevice.Channels}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <ProgressBar Style="{StaticResource HudMeter}" Height="16"
-                                                         Margin="0,0,0,7"
-                                                         Value="{Binding PeakPercent, Mode=OneWay}" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,6,0,0"
-                                           Text="Fale normalmente: a barra deve ficar entre 60% e 80% nos picos. Encostando no fim, a voz distorce; muito baixa, o supressor de ruído do Discord come as palavras. O ganho extra (Microphone Boost) é um controle do driver do fabricante e não aparece aqui — se precisar dele, use o painel clássico." />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Balanço e canais ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <TextBlock Text="BALANÇO E CANAIS" Style="{StaticResource HudSectionTitle}"
-                                               Margin="0" />
-                                    <Button Content="CENTRALIZAR" Style="{StaticResource HudButton}"
-                                            HorizontalAlignment="Right" Padding="12,5"
-                                            Command="{Binding CenterBalanceCommand}" />
-                                </Grid>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="ESQ" Style="{StaticResource HudCaption}"
-                                               VerticalAlignment="Center" Margin="0,0,12,0" />
-                                    <Slider Grid.Column="1" Style="{StaticResource HudSliderCentered}"
-                                            Minimum="-100" Maximum="100"
-                                            Value="{Binding SelectedDevice.Balance, Mode=TwoWay, Delay=140}" />
-                                    <TextBlock Grid.Column="2" Text="DIR" Style="{StaticResource HudCaption}"
-                                               VerticalAlignment="Center" Margin="12,0,0,0" />
-                                </Grid>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,16">
-                                    <TextBlock Text="{Binding SelectedDevice.BalanceLabel}"
-                                               Style="{StaticResource HudValue}" Margin="0,0,16,0" />
-                                    <TextBlock Text="{Binding SelectedDevice.SpreadLabel}"
-                                               Style="{StaticResource HudCaption}" VerticalAlignment="Center" />
-                                </StackPanel>
-
-                                <ItemsControl ItemsSource="{Binding SelectedDevice.Channels}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,12">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="126" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="70" />
-                                                    <ColumnDefinition Width="88" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Label}"
-                                                           Foreground="{StaticResource HudText}" FontSize="12"
-                                                           VerticalAlignment="Center" />
-
-                                                <Slider Grid.Row="0" Grid.Column="1"
-                                                        Style="{StaticResource HudSlider}"
-                                                        Minimum="0" Maximum="100"
-                                                        Value="{Binding Percent, Mode=TwoWay, Delay=140}" />
-
-                                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding PercentLabel}"
-                                                           Style="{StaticResource HudValueDim}"
-                                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
-
-                                                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding DecibelsLabel}"
-                                                           Style="{StaticResource HudValue}"
-                                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
-
-                                                <ProgressBar Grid.Row="1" Grid.Column="1"
-                                                             Style="{StaticResource HudMeter}"
-                                                             Value="{Binding PeakPercent, Mode=OneWay}"
-                                                             Margin="0,3,0,0" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Volume ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="VOLUME MESTRE" Style="{StaticResource HudSectionTitle}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0" Style="{StaticResource HudSlider}"
-                                            Minimum="0" Maximum="100"
-                                            Value="{Binding SelectedDevice.MasterVolume, Mode=TwoWay, Delay=140}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding SelectedDevice.MasterDecibelsLabel}"
-                                               Style="{StaticResource HudValue}" FontSize="14"
-                                               VerticalAlignment="Center" Margin="16,0,0,0" />
-                                </Grid>
-                                <Grid Margin="0,14,0,0">
-                                    <CheckBox Style="{StaticResource HudSwitch}" Content="Mudo"
-                                              IsChecked="{Binding SelectedDevice.IsMuted, Mode=TwoWay}" />
-                                    <TextBlock Text="{Binding SelectedDevice.RangeLabel}"
-                                               Style="{StaticResource HudCaption}" HorizontalAlignment="Right"
-                                               VerticalAlignment="Center" />
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Qualidade ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="QUALIDADE" Style="{StaticResource HudSectionTitle}" />
-                                <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
-                                          ItemsSource="{Binding SelectedDevice.Formats}"
-                                          SelectedItem="{Binding SelectedDevice.SelectedFormat, Mode=TwoWay}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Label}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,11,0,0"
-                                           Text="A lista mostra só o que o hardware realmente aceita, sondado em modo exclusivo. 48 kHz é a taxa nativa de motores de jogo — casar com ela evita uma reamostragem no caminho. Trocar exige administrador e vale a partir da próxima inicialização do dispositivo." />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Áudio espacial ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding IsOutputSelected, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="ÁUDIO ESPACIAL" Style="{StaticResource HudSectionTitle}" />
-                                <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
-                                          ItemsSource="{Binding SelectedDevice.SpatialFormats}"
-                                          SelectedItem="{Binding SelectedDevice.SelectedSpatialFormat, Mode=TwoWay}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Opacity="{Binding IsAvailable, Converter={StaticResource AvailabilityOpacity}}">
-                                                <TextBlock Text="{Binding Name}" />
-                                                <TextBlock Text="{Binding Requirement}" FontSize="10"
-                                                           Foreground="{StaticResource HudWarn}"
-                                                           Visibility="{Binding IsAvailable, Converter={StaticResource InverseBoolToVisibility}}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,11,0,0"
-                                           Text="Para FPS, deixe desativado: CS2, Valorant e Apex já aplicam HRTF próprio, e empilhar a virtualização do Windows por cima borra a imagem em vez de melhorá-la. Para filmes, o Windows Sonic ajuda — a trilha vem em 5.1/7.1 e não traz HRTF." />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Driver ============ -->
-                        <Border Style="{StaticResource HudCard}"
-                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <TextBlock Text="DRIVER E DISPOSITIVO" Style="{StaticResource HudSectionTitle}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Descrição" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDevice.Driver.Description}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Fornecedor" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDevice.Driver.Provider}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
-
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Versão" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDevice.Driver.VersionLabel}" Style="{StaticResource HudValue}" Margin="0,0,0,6" />
-
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Data" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
-                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDevice.Driver.DateLabel}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
-
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Serviço / INF" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
-                                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
-                                        <TextBlock Text="{Binding SelectedDevice.Driver.Service}" Style="{StaticResource HudValueDim}" />
-                                        <TextBlock Text=" · " Style="{StaticResource HudValueDim}" />
-                                        <TextBlock Text="{Binding SelectedDevice.Driver.InfName}" Style="{StaticResource HudValueDim}" />
-                                    </StackPanel>
-
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Instância" Style="{StaticResource HudCaption}" Margin="0,0,20,0" />
-                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedDevice.Driver.InstanceId}"
-                                               Style="{StaticResource HudValueDim}" FontSize="11"
-                                               Foreground="{StaticResource HudTextFaint}"
-                                               TextTrimming="CharacterEllipsis" />
-                                </Grid>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                                    <Button Content="REINICIAR SERVIÇO" Style="{StaticResource HudButton}"
-                                            Margin="0,0,8,0" Command="{Binding RestartAudioServiceCommand}" />
-                                    <Button Content="GERENCIADOR" Style="{StaticResource HudButton}"
-                                            Margin="0,0,8,0" Command="{Binding OpenDeviceManagerCommand}" />
-                                    <Button Content="SOM DO WINDOWS" Style="{StaticResource HudButton}"
-                                            Margin="0,0,8,0" Command="{Binding OpenSoundSettingsCommand}" />
-                                    <Button Content="PAINEL CLÁSSICO" Style="{StaticResource HudButton}"
-                                            Command="{Binding OpenLegacyPanelCommand}" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Sistema ============ -->
-                        <Border Style="{StaticResource HudCard}">
-                            <StackPanel>
-                                <TextBlock Text="SISTEMA" Style="{StaticResource HudSectionTitle}" />
-
-                                <TextBlock Text="Quando o Windows detectar uma chamada de voz"
-                                           Style="{StaticResource HudCaption}" Margin="0,0,0,7" />
-                                <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
-                                          ItemsSource="{Binding DuckingOptions}"
-                                          SelectedItem="{Binding SelectedDucking, Mode=TwoWay}" />
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,9,0,16"
-                                           Text="No padrão do Windows, falar no Discord derruba o áudio do jogo em 80%. Para FPS isso é fatal: você perde o passo justamente quando está chamando a jogada." />
-
-                                <CheckBox Style="{StaticResource HudSwitch}"
-                                          Content="Áudio mono (junta os dois canais)"
-                                          IsChecked="{Binding MonoEnabled, Mode=TwoWay}" />
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,9,0,0"
-                                           Text="Mantenha desligado para jogar: em mono não existe direção, e a informação de onde vem o tiro desaparece." />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ============ Background ============ -->
-                        <Border Style="{StaticResource HudCard}">
-                            <StackPanel>
-                                <TextBlock Text="EXECUÇÃO EM SEGUNDO PLANO"
-                                           Style="{StaticResource HudSectionTitle}" />
-
-                                <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
-                                          Content="Fechar envia para a bandeja em vez de encerrar"
-                                          IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
-                                <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
-                                          Content="Iniciar junto com o Windows"
-                                          IsChecked="{Binding StartWithWindows, Mode=TwoWay}" />
-                                <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
-                                          Content="Iniciar minimizado na bandeja"
-                                          IsChecked="{Binding StartMinimized, Mode=TwoWay}" />
-                                <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
-                                          Content="Verificar o áudio periodicamente"
-                                          IsChecked="{Binding BackgroundCheckupEnabled, Mode=TwoWay}" />
-                                <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,14"
-                                          Content="Avisar na bandeja quando achar um problema"
-                                          IsChecked="{Binding NotifyOnIssues, Mode=TwoWay}" />
-
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <TextBlock Text="Intervalo" Style="{StaticResource HudCaption}"
-                                               VerticalAlignment="Center" Width="70" />
-                                    <Slider Style="{StaticResource HudSlider}" Width="230" Minimum="1" Maximum="60"
-                                            IsSnapToTickEnabled="True" TickFrequency="1"
-                                            Value="{Binding CheckupIntervalMinutes, Mode=TwoWay, Delay=200}" />
-                                    <TextBlock Text="{Binding CheckupIntervalLabel}" Style="{StaticResource HudValue}"
-                                               VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </StackPanel>
-
-                                <TextBlock Style="{StaticResource HudCaption}"
-                                           Text="Em segundo plano o Quantum não abre nenhum stream de áudio e os medidores ficam parados: a verificação é só um punhado de leituras que levam poucos milissegundos. O consumo em repouso é desprezível." />
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,10,0,0"
-                                           Text="{Binding ProfileStoragePath, StringFormat=Perfis em: {0}}" />
-                            </StackPanel>
-                        </Border>
-
-                    </StackPanel>
-                </ScrollViewer>
+                <Border Grid.Column="1" BorderBrush="{DynamicResource HudBorder}" BorderThickness="0,1,0,0">
+                    <Grid>
+                        <sections:DashboardSection
+                            Visibility="{Binding IsDashboardVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <sections:DevicesSection
+                            Visibility="{Binding IsDeviceSectionVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <sections:SettingsSection
+                            Visibility="{Binding IsSettingsVisible, Converter={StaticResource BoolToVisibility}}" />
+                    </Grid>
+                </Border>
             </Grid>
 
             <!-- ============ Status ============ -->
-            <Border Grid.Row="3" Background="#FF0A0E17" BorderBrush="{StaticResource HudBorder}"
+            <Border Grid.Row="3" Background="{DynamicResource HudStatusBar}" BorderBrush="{DynamicResource HudBorder}"
                     BorderThickness="0,1,0,0" Padding="22,11">
                 <StackPanel Orientation="Horizontal">
-                    <Border Width="3" Height="14" Background="{StaticResource NeonGradientV}"
+                    <Border Width="3" Height="14" Background="{DynamicResource NeonGradientV}"
                             Margin="0,0,11,0" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding StatusMessage}" FontSize="11.5" TextWrapping="Wrap"
                                VerticalAlignment="Center"

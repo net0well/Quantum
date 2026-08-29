@@ -6,6 +6,30 @@ workflow de release — toda entrada na `main` publica uma versão nova.
 
 ## [Não lançado]
 
+### Adicionado
+
+- Barra lateral com Painel, Saída, Entrada e Ajustes, no lugar da página única
+  com rolagem
+- Medidores com escala em dB (−60 a 0), balística de medidor de pico, traço de
+  pico e indicador de clipping que trava até ser reconhecido
+- Tema claro, alternável em Ajustes sem reiniciar o app
+- Tipografia própria (Chakra Petch, OFL) nos títulos, rótulos e botões
+- Atalho para abrir a pasta de dados do Quantum
+
+### Alterado
+
+- Injeção de dependência e log em arquivo no lugar da composição manual
+- `AudioDeviceService` dividido em catálogo, controlador de volume e medidor
+- Strategy, Factory, Repository e Adapter aplicados com sufixo explícito no nome
+- Explicações longas dentro dos cartões passaram para tooltip
+
+### Corrigido
+
+- Leitura de medidor caiu de 792,9 µs para 53,81 µs mantendo o ponteiro COM vivo
+  entre as chamadas — 15x, e o que torna o mixer viável
+- Fundo da janela ficava preto no tema claro: o `FluentWindow` com backdrop
+  "None" não honra o `Background` da janela
+
 ## [1.0.5]
 
 ### Manutenção
