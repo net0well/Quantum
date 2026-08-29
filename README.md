@@ -14,7 +14,7 @@
 
 [**Baixar a última versão**](https://github.com/net0well/Quantum/releases/latest) · [Como usar](#como-usar) · [Configuração para FPS](#configuração-recomendada-para-fps) · [Desenvolvimento](#desenvolvimento)
 
-<img src="docs/images/01-visao-geral.png" alt="Tela principal do Quantum" width="900" />
+<img src="docs/images/01-painel.png" alt="Painel do Quantum" width="900" />
 
 </div>
 
@@ -49,6 +49,7 @@ resto do que fica espalhado pelo painel do Windows.
   - [Áudio espacial](#áudio-espacial)
   - [Driver e dispositivo](#driver-e-dispositivo)
   - [Sistema](#sistema)
+  - [Aparência](#aparência)
   - [Segundo plano](#segundo-plano)
 - [Quando precisa de administrador](#quando-precisa-de-administrador)
 - [Configuração recomendada para FPS](#configuração-recomendada-para-fps)
@@ -99,9 +100,12 @@ executável portátil:
 
 ### Escolher o dispositivo
 
-A coluna da esquerda alterna entre **SAÍDA** (fones, caixas, monitor por HDMI) e
-**ENTRADA** (microfones). O dispositivo em uso pelo Windows aparece com a tarja
-`PADRÃO`.
+A barra lateral tem quatro seções: **Painel** (diagnóstico e perfis), **Saída**
+(fones, caixas, monitor por HDMI), **Entrada** (microfones) e **Ajustes**. Saída e
+Entrada usam a mesma tela e mudam só a direção dos dispositivos listados.
+
+Dentro da seção, a coluna da esquerda lista os dispositivos. O que o Windows está
+usando aparece com a tarja `PADRÃO`.
 
 Dispositivos ausentes ficam ocultos por padrão — ligue **Mostrar desconectados**
 quando precisar mexer em algo que não está plugado no momento, ou para conferir que
@@ -109,7 +113,7 @@ o Windows enxerga um endpoint que você espera.
 
 ### Verificação do sistema
 
-<img src="docs/images/01-visao-geral.png" alt="Verificação e perfis" width="820" />
+<img src="docs/images/01-painel.png" alt="Verificação e perfis" width="820" />
 
 O primeiro cartão é um diagnóstico. Ele procura:
 
@@ -149,7 +153,7 @@ e podem ser excluídos pelo botão no cartão.
 
 ### Balanço e canais
 
-<img src="docs/images/02-balanco-canais.png" alt="Balanço, canais e volume" width="820" />
+<img src="docs/images/02-saida.png" alt="Balanço, canais e volume" width="820" />
 
 O controle grande vai de **−100 (todo à esquerda)** a **+100 (todo à direita)**, com
 uma marca no centro. Abaixo dele, o texto diz em palavras onde você está
@@ -163,6 +167,16 @@ com um medidor de pico ao vivo logo abaixo. Os medidores respondem ao que está
 tocando: é o jeito mais rápido de confirmar visualmente que os dois lados estão
 recebendo o mesmo sinal.
 
+Os medidores são instrumentos, não enfeite. Têm **escala em dB** de −60 a 0 com
+marcações em −20, −12, −6 e −3, **balística** de medidor de pico (ataque imediato,
+decaimento de 20 dB/s), **traço de pico** que segura o máximo por um segundo e meio,
+e um indicador de **clipping** que trava aceso até ser reconhecido.
+
+> O detalhe que separa medidor de enfeite: o pico que a API de áudio devolve é
+> amplitude linear de 0 a 1, não decibéis. Amplitude 0,5 parece "metade da barra",
+> mas é −6 dB — que numa régua de −60 a 0 fica a 90% do caminho. Barra linear com
+> régua em dB está mentindo, e o Quantum tem teste travando esse caso.
+
 ### Volume mestre
 
 O volume do dispositivo, com o valor em dB ao lado. A legenda mostra a faixa real do
@@ -173,7 +187,7 @@ decibéis são ganho digital acima do nível de referência. Baixar para ~90% re
 
 ### Microfone
 
-<img src="docs/images/06-microfone.png" alt="Controle de microfone" width="820" />
+<img src="docs/images/03-entrada.png" alt="Controle de microfone" width="820" />
 
 Na aba **ENTRADA**, o cartão **NÍVEL DE ENTRADA** mostra o que o microfone está
 captando neste instante.
@@ -198,7 +212,7 @@ prática — se o seu dispositivo só oferece 16 bits, não há nada perdido.
 
 ### Áudio espacial
 
-<img src="docs/images/05-background.png" alt="Espacial, driver, sistema e segundo plano" width="820" />
+<img src="docs/images/04-ajustes.png" alt="Ajustes: aparência, áudio do Windows e segundo plano" width="820" />
 
 Lista o que está registrado para aquele dispositivo: **Desativado**, **Windows
 Sonic**, **Dolby Atmos** e **DTS Headphone:X**.
@@ -227,6 +241,16 @@ está chamando a jogada. Deixe em **Não fazer nada**.
 
 **Áudio mono.** Soma os dois canais. É um recurso de acessibilidade; para jogar,
 mantenha desligado — em mono não existe direção.
+
+### Aparência
+
+Em **Ajustes → Aparência** dá para alternar entre tema escuro e claro. A troca vale
+na hora, sem reiniciar: as duas paletas têm as mesmas chaves e o app inteiro é
+repintado ao trocar o dicionário.
+
+O tema claro não é o escuro invertido — num fundo claro os tons neon puros perdem
+contraste e viram borrão, então violeta e ciano descem de luminosidade até passarem
+em texto pequeno.
 
 ### Segundo plano
 
