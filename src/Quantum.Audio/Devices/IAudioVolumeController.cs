@@ -2,19 +2,11 @@ using Quantum.Audio.Models;
 
 namespace Quantum.Audio.Devices;
 
-/// <summary>Enumeração de endpoints de saída e controle de volume/balanço.</summary>
-public interface IAudioDeviceService
+/// <summary>Volume, mudo, níveis por canal e balanço de um endpoint.</summary>
+public interface IAudioVolumeController
 {
-    /// <summary>Disparado quando um dispositivo é conectado, removido ou muda de estado.</summary>
-    event EventHandler? DevicesChanged;
-
-    /// <summary>Disparado quando o volume de um endpoint muda por fora do Quantum.</summary>
+    /// <summary>Disparado quando o volume de um endpoint muda por ação do Quantum.</summary>
     event EventHandler<string>? VolumeChanged;
-
-    /// <summary>Endpoints de saída ou de entrada, conforme <paramref name="kind"/>.</summary>
-    IReadOnlyList<AudioDeviceInfo> GetDevices(AudioDeviceKind kind, bool includeDisconnected = false);
-
-    AudioDeviceInfo? GetDevice(string deviceId);
 
     VolumeState GetVolumeState(string deviceId);
 
@@ -33,7 +25,4 @@ public interface IAudioDeviceService
 
     /// <summary>Iguala todos os canais no nível do mais alto.</summary>
     AudioResult CenterBalance(string deviceId);
-
-    /// <summary>Picos instantâneos por canal (0..1) para o medidor da interface.</summary>
-    float[] GetChannelPeaks(string deviceId);
 }

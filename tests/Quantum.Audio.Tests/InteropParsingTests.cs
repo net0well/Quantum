@@ -108,7 +108,7 @@ public class InteropParsingTests
     [InlineData(null, null)]
     public void Prefixo_do_caminho_de_instancia_e_removido(string? raw, string? expected)
     {
-        Assert.Equal(expected, AudioDeviceService.NormalizeInstanceId(raw));
+        Assert.Equal(expected, AudioDeviceCatalog.NormalizeInstanceId(raw));
     }
 
     [Theory]
@@ -118,7 +118,7 @@ public class InteropParsingTests
     [InlineData(0x8, AudioDeviceState.Unplugged)]
     public void Estado_do_endpoint_e_mapeado(int raw, AudioDeviceState expected)
     {
-        Assert.Equal(expected, AudioDeviceService.MapState(raw));
+        Assert.Equal(expected, AudioDeviceCatalog.MapState(raw));
     }
 
     [Theory]

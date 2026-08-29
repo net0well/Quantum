@@ -1,8 +1,4 @@
-using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
-using Quantum.Audio.Quality;
-using Quantum.Audio.Spatial;
-using Quantum.Audio.SystemAudio;
 
 namespace Quantum.Audio.Profiles;
 
@@ -28,94 +24,25 @@ public interface IProfileApplier
     ProfileApplyReport Apply(AudioProfile profile, string deviceId);
 }
 
-/// <inheritdoc cref="IProfileApplier"/>
-public sealed class ProfileApplier(
-    IAudioDeviceService devices,
-    IAudioQualityService quality,
-    ISpatialAudioService spatial,
-    ISystemAudioService system) : IProfileApplier
+/// <summary>
+/// Executa os passos que o perfil define.
+/// </summary>
+/// <remarks>
+/// Não sabe o que nenhum passo faz: só filtra os aplicáveis, ordena e coleta o
+/// resultado de cada um. Toda a lógica mora nas implementações de
+/// <see cref="IProfileStepStrategy"/>.
+/// </remarks>
+public sealed class ProfileApplier(IEnumerable<IProfileStepStrategy> strategies) : IProfileApplier
 {
+    private readonly IProfileStepStrategy[] _strategies = [.. strategies.OrderBy(s => s.Order)];
+
     public ProfileApplyReport Apply(AudioProfile profile, string deviceId)
     {
-        var steps = new List<ProfileApplyStep>
-        {
-            new("Balanço dos canais", devices.SetBalance(deviceId, profile.Balance)),
-        };
-
-        if (profile.MasterVolume is { } master)
-        {
-            steps.Add(new ProfileApplyStep("Volume mestre", devices.SetMasterScalar(deviceId, master)));
-        }
-
-        if (profile.SpatialFormatId is { } spatialId)
-        {
-            steps.Add(new ProfileApplyStep("Áudio espacial", ApplySpatial(deviceId, spatialId)));
-        }
-
-        if (profile.Quality != QualityTarget.Keep)
-        {
-            steps.Add(new ProfileApplyStep("Qualidade", ApplyQuality(deviceId, profile.Quality)));
-        }
-
-        if (profile.Ducking is { } ducking)
-        {
-            steps.Add(new ProfileApplyStep("Comunicação", system.SetDuckingPreference(ducking)));
-        }
-
-        if (profile.Mono is { } mono)
-        {
-            steps.Add(new ProfileApplyStep("Áudio mono", system.SetMonoEnabled(mono)));
-        }
+        var steps = _strategies
+            .Where(strategy => strategy.AppliesTo(profile))
+            .Select(strategy => new ProfileApplyStep(strategy.Name, strategy.Apply(profile, deviceId)))
+            .ToList();
 
         return new ProfileApplyReport(profile, steps);
-    }
-
-    private AudioResult ApplySpatial(string deviceId, uint spatialId)
-    {
-        var current = spatial.GetCurrentFormat(deviceId);
-        if (current.Id == spatialId)
-        {
-            return AudioResult.Ok("Já estava no formato desejado.");
-        }
-
-        var target = spatial.GetFormats(deviceId).FirstOrDefault(f => f.Id == spatialId);
-        if (target is null)
-        {
-            return AudioResult.Fail("O formato espacial deste perfil não está registrado neste dispositivo.");
-        }
-
-        return spatial.SetFormat(deviceId, target);
-    }
-
-    private AudioResult ApplyQuality(string deviceId, QualityTarget target)
-    {
-        var supported = quality.GetSupportedFormats(deviceId);
-        if (supported.Count == 0)
-        {
-            return AudioResult.Fail("Não foi possível descobrir os formatos suportados.");
-        }
-
-        var chosen = target switch
-        {
-            QualityTarget.GameNative => supported
-                .Where(f => f.IsGameNativeRate)
-                .OrderByDescending(f => f.BitDepth)
-                .FirstOrDefault(),
-            QualityTarget.Highest => supported
-                .OrderByDescending(f => f.SampleRate)
-                .ThenByDescending(f => f.BitDepth)
-                .FirstOrDefault(),
-            _ => null,
-        };
-
-        if (chosen is null)
-        {
-            return AudioResult.Fail("Este dispositivo não oferece um formato compatível com o perfil.");
-        }
-
-        var current = quality.GetCurrentFormat(deviceId);
-        return current == chosen
-            ? AudioResult.Ok($"Já estava em {chosen.ShortLabel}.")
-            : quality.SetFormat(deviceId, chosen);
     }
 }

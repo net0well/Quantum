@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using Microsoft.Win32;
 using Quantum.Audio.Models;
+using Quantum.Audio.Storage;
 
 namespace Quantum.App.Services;
 
@@ -28,13 +29,9 @@ public sealed class AppSettingsService : IAppSettingsService
 
     private AppSettings _current;
 
-    public AppSettingsService(string? storagePath = null)
+    public AppSettingsService(IAppPaths paths)
     {
-        StoragePath = storagePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Quantum",
-            "settings.json");
-
+        StoragePath = paths.SettingsFile;
         _current = Load();
     }
 

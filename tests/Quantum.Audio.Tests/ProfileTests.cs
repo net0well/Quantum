@@ -1,7 +1,9 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Quantum.Audio.Devices;
 using Quantum.Audio.Models;
 using Quantum.Audio.Profiles;
 using Quantum.Audio.Spatial;
+using Quantum.Audio.Storage;
 using Quantum.Audio.SystemAudio;
 using Xunit;
 
@@ -9,11 +11,12 @@ namespace Quantum.Audio.Tests;
 
 public class ProfileTests : IDisposable
 {
-    private readonly string _storagePath =
-        Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}", "profiles.json");
+    private readonly IAppPaths _paths =
+        new AppPaths(Path.Combine(Path.GetTempPath(), $"quantum-tests-{Guid.NewGuid():n}"));
 
     private ProfileService CreateService() =>
-        new(new StubDevices(), new StubSpatial(), new StubSystem(), _storagePath);
+        new(new StubVolumes(), new StubSpatial(), new StubSystem(),
+            new JsonProfileRepository(_paths, NullLogger<JsonProfileRepository>.Instance));
 
     [Fact]
     public void Perfil_de_fps_desliga_espacial_e_ducking()
@@ -111,24 +114,18 @@ public class ProfileTests : IDisposable
 
     public void Dispose()
     {
-        var directory = Path.GetDirectoryName(_storagePath);
-        if (directory is not null && Directory.Exists(directory))
+        if (Directory.Exists(_paths.Root))
         {
-            Directory.Delete(directory, recursive: true);
+            Directory.Delete(_paths.Root, recursive: true);
         }
     }
 
     // ---- Dublês: a persistência de perfis não toca nos serviços de áudio ----
+    // Só o controlador de volume aparece, porque CaptureFromDevice lê o estado atual.
 
-    private sealed class StubDevices : IAudioDeviceService
+    private sealed class StubVolumes : IAudioVolumeController
     {
-        public event EventHandler? DevicesChanged { add { } remove { } }
-
         public event EventHandler<string>? VolumeChanged { add { } remove { } }
-
-        public IReadOnlyList<AudioDeviceInfo> GetDevices(AudioDeviceKind kind, bool includeDisconnected = false) => [];
-
-        public AudioDeviceInfo? GetDevice(string deviceId) => null;
 
         public VolumeState GetVolumeState(string deviceId) => VolumeState.Empty;
 
@@ -145,8 +142,6 @@ public class ProfileTests : IDisposable
         public AudioResult SetBalance(string deviceId, float balance) => AudioResult.Ok();
 
         public AudioResult CenterBalance(string deviceId) => AudioResult.Ok();
-
-        public float[] GetChannelPeaks(string deviceId) => [];
     }
 
     private sealed class StubSpatial : ISpatialAudioService

@@ -51,6 +51,29 @@ o tipo é óbvio, chaves sempre, campos privados com `_`.
 Comentário explica **por que**, não o que o código faz. Se o código precisa de
 comentário para dizer o que faz, reescreva o código.
 
+## Padrões de projeto: o nome tem que entregar o padrão
+
+Se uma classe implementa um padrão, **o sufixo diz qual**. Quem abre o arquivo
+descobre a intenção pelo nome, sem ler a implementação:
+
+| Padrão | Sufixo | Exemplo no projeto |
+|---|---|---|
+| Strategy | `...Strategy` | `ChannelImbalanceHealthCheckStrategy`, `QualityProfileStepStrategy` |
+| Factory | `...Factory` | `DeviceViewModelFactory` |
+| Repository | `...Repository` | `JsonProfileRepository` |
+| Adapter | `...Adapter` | `TrayIconAdapter` |
+
+Vale o contrário também: **não use o sufixo sem o padrão**. Uma classe chamada
+`XFactory` que não fabrica nada é pior que uma sem nome nenhum.
+
+E o sufixo não é licença para espalhar padrão onde não precisa. O critério é
+sempre a dor concreta: as verificações de saúde viraram Strategy porque cada
+uma nova exigiria editar o `HealthMonitor`; o `TrayIconAdapter` tem esse nome
+porque de fato adapta a API do WinForms ao modelo de eventos do WPF.
+
+Ao mexer numa área, vale olhar se algum padrão já aplicado ali cabe no que você
+está acrescentando — o objetivo é o projeto inteiro conversar da mesma forma.
+
 ## Mensagens de commit
 
 Descreva o efeito, não o arquivo alterado:

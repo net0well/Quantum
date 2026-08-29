@@ -23,11 +23,11 @@ public sealed record DuckingOption(DuckingPreference Value, string Label)
 
 public sealed class MainViewModel : ObservableObject, IDisposable
 {
-    private readonly IAudioDeviceService _devices;
-    private readonly IAudioQualityService _quality;
+    private readonly IAudioDeviceCatalog _catalog;
+    private readonly IAudioVolumeController _volumes;
     private readonly ISpatialAudioService _spatial;
-    private readonly IDriverService _drivers;
     private readonly ISystemAudioService _system;
+    private readonly IDeviceViewModelFactory _deviceFactory;
     private readonly IProfileService _profiles;
     private readonly IProfileApplier _applier;
     private readonly IHealthMonitor _health;
@@ -50,21 +50,21 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool _suppress;
 
     public MainViewModel(
-        IAudioDeviceService devices,
-        IAudioQualityService quality,
+        IAudioDeviceCatalog catalog,
+        IAudioVolumeController volumes,
         ISpatialAudioService spatial,
-        IDriverService drivers,
         ISystemAudioService system,
+        IDeviceViewModelFactory deviceFactory,
         IProfileService profiles,
         IProfileApplier applier,
         IHealthMonitor health,
         IAppSettingsService settings)
     {
-        _devices = devices;
-        _quality = quality;
+        _catalog = catalog;
+        _volumes = volumes;
         _spatial = spatial;
-        _drivers = drivers;
         _system = system;
+        _deviceFactory = deviceFactory;
         _profiles = profiles;
         _applier = applier;
         _health = health;
@@ -92,7 +92,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         OpenLegacyPanelCommand = new RelayCommand(_system.OpenLegacySoundPanel);
         OpenDeviceManagerCommand = new RelayCommand(_system.OpenDeviceManager);
 
-        _devices.DevicesChanged += OnDevicesChanged;
+        _catalog.DevicesChanged += OnDevicesChanged;
 
         LoadSystemSettings();
         LoadProfiles();
@@ -372,9 +372,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var previousId = SelectedDevice?.Id;
         Devices.Clear();
 
-        foreach (var info in _devices.GetDevices(_selectedKind, _showDisconnected))
+        foreach (var info in _catalog.GetDevices(_selectedKind, _showDisconnected))
         {
-            Devices.Add(new DeviceViewModel(info, _devices, _quality, _spatial, _drivers));
+            Devices.Add(_deviceFactory.Create(info));
         }
 
         SelectedDevice = Devices.FirstOrDefault(d => d.Id == previousId)
@@ -426,7 +426,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         _meterTimer.Stop();
         _checkupTimer.Stop();
-        _devices.DevicesChanged -= OnDevicesChanged;
+        _catalog.DevicesChanged -= OnDevicesChanged;
     }
 
     private void ConfigureCheckupTimer()
@@ -452,11 +452,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         switch (issue.Kind)
         {
             case HealthIssueKind.ChannelImbalance when issue.DeviceId is not null:
-                SetStatus(_devices.CenterBalance(issue.DeviceId));
+                SetStatus(_volumes.CenterBalance(issue.DeviceId));
                 break;
 
             case HealthIssueKind.DeviceMuted when issue.DeviceId is not null:
-                SetStatus(_devices.SetMuted(issue.DeviceId, false));
+                SetStatus(_volumes.SetMuted(issue.DeviceId, false));
                 break;
 
             case HealthIssueKind.MonoEnabled:
@@ -489,7 +489,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SetStatus(_devices.CenterBalance(SelectedDevice.Id) with
+        SetStatus(_volumes.CenterBalance(SelectedDevice.Id) with
         {
             Message = "Canais igualados — balanço centralizado.",
         });
