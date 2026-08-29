@@ -59,6 +59,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\quantum.ico" />
+    <!-- Embutidas no assembly, então sobrevivem à publicação em arquivo único -->
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
 </Project>

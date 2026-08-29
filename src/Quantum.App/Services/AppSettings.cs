@@ -14,8 +14,12 @@ public sealed record AppSettings
 
     public bool NotifyOnIssues { get; init; } = true;
 
+    public AppTheme Theme { get; init; } = AppTheme.Dark;
+
     public static AppSettings Default { get; } = new();
 
     /// <summary>Mantém o intervalo em uma faixa que não pesa nem deixa de ser útil.</summary>
+    /// <remarks>Calculada — não vai para o arquivo de preferências.</remarks>
+    [System.Text.Json.Serialization.JsonIgnore]
     public int SafeIntervalMinutes => Math.Clamp(CheckupIntervalMinutes, 1, 120);
 }

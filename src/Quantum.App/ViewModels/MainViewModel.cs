@@ -11,6 +11,7 @@ using Quantum.Audio.Models;
 using Quantum.Audio.Profiles;
 using Quantum.Audio.Quality;
 using Quantum.Audio.Spatial;
+using Quantum.Audio.Storage;
 using Quantum.Audio.SystemAudio;
 
 namespace Quantum.App.ViewModels;
@@ -32,12 +33,15 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly IProfileApplier _applier;
     private readonly IHealthMonitor _health;
     private readonly IAppSettingsService _settings;
+    private readonly IThemeService _theme;
+    private readonly IAppPaths _paths;
 
     private readonly DispatcherTimer _meterTimer;
     private readonly DispatcherTimer _checkupTimer;
     private readonly HashSet<string> _notifiedIssues = [];
 
     private DeviceViewModel? _selectedDevice;
+    private NavigationSection _selectedSection = null!;
     private AudioDeviceKind _selectedKind = AudioDeviceKind.Output;
     private DuckingOption? _selectedDucking;
     private HealthReport _lastReport = HealthReport.Empty;
@@ -58,7 +62,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         IProfileService profiles,
         IProfileApplier applier,
         IHealthMonitor health,
-        IAppSettingsService settings)
+        IAppSettingsService settings,
+        IThemeService theme,
+        IAppPaths paths)
     {
         _catalog = catalog;
         _volumes = volumes;
@@ -69,6 +75,18 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _applier = applier;
         _health = health;
         _settings = settings;
+        _theme = theme;
+        _paths = paths;
+
+        Sections =
+        [
+            new NavigationSection(NavigationSection.Dashboard, "Painel", "IconGauge"),
+            new NavigationSection(NavigationSection.Output, "Saída", "IconHeadphones", AudioDeviceKind.Output),
+            new NavigationSection(NavigationSection.Input, "Entrada", "IconMicrophone", AudioDeviceKind.Input),
+            new NavigationSection(NavigationSection.Settings, "Ajustes", "IconSliders"),
+        ];
+
+        _selectedSection = Sections[0];
 
         DuckingOptions =
         [
@@ -91,6 +109,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         OpenSoundSettingsCommand = new RelayCommand(_system.OpenWindowsSoundSettings);
         OpenLegacyPanelCommand = new RelayCommand(_system.OpenLegacySoundPanel);
         OpenDeviceManagerCommand = new RelayCommand(_system.OpenDeviceManager);
+        OpenDataFolderCommand = new RelayCommand(OpenDataFolder);
 
         _catalog.DevicesChanged += OnDevicesChanged;
 
@@ -126,6 +145,52 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<DuckingOption> DuckingOptions { get; }
 
+    public IReadOnlyList<NavigationSection> Sections { get; }
+
+    /// <summary>
+    /// Seção aberta na barra lateral. Saída e Entrada compartilham a mesma tela —
+    /// mudam só a direção dos dispositivos listados, o que aposenta o antigo
+    /// alternador dentro da página.
+    /// </summary>
+    public NavigationSection SelectedSection
+    {
+        get => _selectedSection;
+        set
+        {
+            if (value is null || !SetProperty(ref _selectedSection, value))
+            {
+                return;
+            }
+
+            if (value.Kind is { } kind)
+            {
+                SelectedKind = kind;
+            }
+
+            OnPropertyChanged(nameof(IsDashboardVisible));
+            OnPropertyChanged(nameof(IsDeviceSectionVisible));
+            OnPropertyChanged(nameof(IsSettingsVisible));
+            OnPropertyChanged(nameof(SectionTitle));
+            OnPropertyChanged(nameof(SectionSubtitle));
+        }
+    }
+
+    public bool IsDashboardVisible => _selectedSection.Key == NavigationSection.Dashboard;
+
+    public bool IsDeviceSectionVisible => _selectedSection.IsDeviceSection;
+
+    public bool IsSettingsVisible => _selectedSection.Key == NavigationSection.Settings;
+
+    public string SectionTitle => _selectedSection.Label.ToUpperInvariant();
+
+    public string SectionSubtitle => _selectedSection.Key switch
+    {
+        NavigationSection.Dashboard => "Diagnóstico e perfis",
+        NavigationSection.Output => "Fones, caixas e saída digital",
+        NavigationSection.Input => "Microfones e entrada de linha",
+        _ => "Comportamento do Windows e do Quantum",
+    };
+
     public ICommand RefreshCommand { get; }
 
     public ICommand CenterBalanceCommand { get; }
@@ -149,6 +214,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public ICommand OpenLegacyPanelCommand { get; }
 
     public ICommand OpenDeviceManagerCommand { get; }
+
+    public ICommand OpenDataFolderCommand { get; }
 
     public bool IsElevated => _system.IsElevated;
 
@@ -306,6 +373,19 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     public string CheckupIntervalLabel => $"a cada {_settings.Current.SafeIntervalMinutes} min";
 
+    /// <summary>Tema claro ligado. A troca vale na hora, sem reiniciar.</summary>
+    public bool IsLightTheme
+    {
+        get => _settings.Current.Theme == AppTheme.Light;
+        set
+        {
+            var theme = value ? AppTheme.Light : AppTheme.Dark;
+            _settings.Update(s => s with { Theme = theme });
+            _theme.Apply(theme);
+            OnPropertyChanged();
+        }
+    }
+
     public bool StartWithWindows
     {
         get => _settings.GetStartWithWindows();
@@ -353,6 +433,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     public string ProfileStoragePath => _profiles.StoragePath;
+
+    public string LogFolderPath => _paths.LogsFolder;
 
     /// <summary>Liga os medidores só quando a janela está visível — economiza CPU em background.</summary>
     public void SetMetersActive(bool active)
@@ -574,6 +656,24 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         StatusMessage = "Elevação cancelada.";
         StatusIsError = true;
+    }
+
+    private void OpenDataFolder()
+    {
+        try
+        {
+            _paths.EnsureCreated();
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = _paths.Root,
+                UseShellExecute = true,
+            });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            StatusMessage = "Não foi possível abrir a pasta de dados.";
+            StatusIsError = true;
+        }
     }
 
     private void LoadProfiles()

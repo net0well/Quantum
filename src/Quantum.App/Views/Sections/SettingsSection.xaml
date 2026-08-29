@@ -1,0 +1,91 @@
+<UserControl x:Class="Quantum.App.Views.Sections.SettingsSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer Margin="20,14,18,6" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+
+            <!-- ============ Aparência ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <StackPanel>
+                    <TextBlock Text="APARÊNCIA" Style="{StaticResource HudSectionTitle}" />
+                    <CheckBox Style="{StaticResource HudSwitch}"
+                              Content="Tema claro"
+                              IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
+                              ToolTip="A troca vale na hora, sem reiniciar o app" />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Sistema ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <StackPanel>
+                    <TextBlock Text="ÁUDIO DO WINDOWS" Style="{StaticResource HudSectionTitle}" />
+
+                    <TextBlock Text="Quando o Windows detectar uma chamada de voz"
+                               Style="{StaticResource HudCaption}" Margin="0,0,0,7" />
+                    <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
+                              ItemsSource="{Binding DuckingOptions}"
+                              SelectedItem="{Binding SelectedDucking, Mode=TwoWay}"
+                              ToolTip="No padrão do Windows, falar no Discord derruba o áudio do jogo em 80%. Para FPS isso é fatal: você perde o passo justamente quando está chamando a jogada." />
+
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,18,0,0"
+                              Content="Áudio mono (junta os dois canais)"
+                              IsChecked="{Binding MonoEnabled, Mode=TwoWay}"
+                              ToolTip="Mantenha desligado para jogar: em mono não existe direção, e a informação de onde vem o tiro desaparece." />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Segundo plano ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <StackPanel>
+                    <TextBlock Text="EXECUÇÃO EM SEGUNDO PLANO"
+                               Style="{StaticResource HudSectionTitle}" />
+
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
+                              Content="Fechar envia para a bandeja em vez de encerrar"
+                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
+                              Content="Iniciar junto com o Windows"
+                              IsChecked="{Binding StartWithWindows, Mode=TwoWay}" />
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
+                              Content="Iniciar minimizado na bandeja"
+                              IsChecked="{Binding StartMinimized, Mode=TwoWay}" />
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,11"
+                              Content="Verificar o áudio periodicamente"
+                              IsChecked="{Binding BackgroundCheckupEnabled, Mode=TwoWay}" />
+                    <CheckBox Style="{StaticResource HudSwitch}" Margin="0,0,0,16"
+                              Content="Avisar na bandeja quando achar um problema"
+                              IsChecked="{Binding NotifyOnIssues, Mode=TwoWay}" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <TextBlock Text="Intervalo" Style="{StaticResource HudCaption}"
+                                   VerticalAlignment="Center" Width="70" />
+                        <Slider Style="{StaticResource HudSlider}" Width="230" Minimum="1" Maximum="60"
+                                IsSnapToTickEnabled="True" TickFrequency="1"
+                                Value="{Binding CheckupIntervalMinutes, Mode=TwoWay, Delay=200}" />
+                        <TextBlock Text="{Binding CheckupIntervalLabel}" Style="{StaticResource HudValue}"
+                                   VerticalAlignment="Center" Margin="14,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Style="{StaticResource HudCaption}"
+                               Text="Em segundo plano o Quantum não abre stream de áudio e os medidores ficam parados — a verificação é um punhado de leituras de poucos milissegundos." />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ Sobre ============ -->
+            <Border Style="{StaticResource HudCard}">
+                <StackPanel>
+                    <TextBlock Text="ARQUIVOS" Style="{StaticResource HudSectionTitle}" />
+                    <TextBlock Style="{StaticResource HudCaption}"
+                               Text="{Binding ProfileStoragePath, StringFormat=Perfis: {0}}" />
+                    <TextBlock Style="{StaticResource HudCaption}" Margin="0,6,0,0"
+                               Text="{Binding LogFolderPath, StringFormat=Registro: {0}}" />
+                    <Button Content="ABRIR PASTA DE DADOS" Style="{StaticResource HudButton}"
+                            HorizontalAlignment="Left" Margin="0,14,0,0"
+                            Command="{Binding OpenDataFolderCommand}" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

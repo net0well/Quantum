@@ -43,6 +43,10 @@ public partial class App : Application
         _services = BuildServices(paths);
         _log = _services.GetRequiredService<ILogger<App>>();
         _settings = _services.GetRequiredService<IAppSettingsService>();
+
+        // Antes de qualquer janela existir, para não abrir no tema errado e piscar.
+        _services.GetRequiredService<IThemeService>().Apply(_settings.Current.Theme);
+
         _viewModel = _services.GetRequiredService<MainViewModel>();
 
         _log.LogInformation("Quantum iniciado. Versão {Version}",
@@ -107,6 +111,7 @@ public partial class App : Application
         });
 
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<TrayIconAdapter>();
         services.AddSingleton<IDeviceViewModelFactory, DeviceViewModelFactory>();
         services.AddSingleton<MainViewModel>();

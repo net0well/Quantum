@@ -1,0 +1,312 @@
+<UserControl x:Class="Quantum.App.Views.Sections.DevicesSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Quantum.App.Controls">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="296" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ Lista de dispositivos ============ -->
+        <Border Grid.Column="0" BorderBrush="{DynamicResource HudBorder}" BorderThickness="0,0,1,0"
+                Background="{DynamicResource HudRail}">
+            <DockPanel Margin="16,4,16,14">
+                <CheckBox DockPanel.Dock="Bottom" Style="{StaticResource HudSwitch}"
+                          Content="Mostrar desconectados" Margin="2,10,0,0"
+                          IsChecked="{Binding ShowDisconnected, Mode=TwoWay}" />
+
+                <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                         Style="{StaticResource HudDeviceList}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Path Grid.Column="0" Style="{StaticResource HudIcon}"
+                                      Data="{Binding Icon, Converter={StaticResource IconGeometry}}"
+                                      Margin="0,0,12,0" />
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource HudText}"
+                                               FontSize="12.5" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource HudCaption}"
+                                               FontSize="10.5" TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Border Background="{DynamicResource NeonGradient}" CornerRadius="2"
+                                                Padding="6,2" Margin="0,0,5,0"
+                                                Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="PADRÃO" FontSize="8.5" FontWeight="Bold"
+                                                       Foreground="{DynamicResource HudOnAccent}" />
+                                        </Border>
+                                        <Border Background="{DynamicResource HudSurfaceHi}" CornerRadius="2" Padding="6,2"
+                                                BorderThickness="1" BorderBrush="{DynamicResource HudBorder}">
+                                            <TextBlock Text="{Binding StateLabel}" FontSize="8.5"
+                                                       Foreground="{DynamicResource HudTextDim}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ============ Controles do dispositivo ============ -->
+        <ScrollViewer Grid.Column="1" Margin="20,4,18,6" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Nível de entrada, só para microfone -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding IsInputSelected, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="NÍVEL DE ENTRADA" Style="{StaticResource HudSectionTitle}" />
+                        <ItemsControl ItemsSource="{Binding SelectedDevice.Channels}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:AudioLevelMeter Style="{StaticResource HudMeterTall}"
+                                                              Margin="0,0,0,5"
+                                                              Amplitude="{Binding Peak, Mode=OneWay}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <controls:AudioLevelMeter Style="{StaticResource HudScaleStrip}" />
+                        <TextBlock Style="{StaticResource HudCaption}" Margin="0,10,0,0"
+                                   Text="Fale normalmente e mire entre −12 dB e −6 dB nos picos."
+                                   ToolTip="Encostando em 0 dB a voz distorce; muito baixa, o supressor de ruído do Discord come as palavras. O ganho extra (Microphone Boost) é um controle do driver do fabricante e não aparece aqui — se precisar dele, use o painel clássico." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Balanço e canais -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock Text="BALANÇO E CANAIS" Style="{StaticResource HudSectionTitle}"
+                                       Margin="0" />
+                            <Button Content="CENTRALIZAR" Style="{StaticResource HudButton}"
+                                    HorizontalAlignment="Right" Padding="12,5"
+                                    Command="{Binding CenterBalanceCommand}"
+                                    ToolTip="Iguala todos os canais no nível do mais alto" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ESQ" Style="{StaticResource HudCaption}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <Slider Grid.Column="1" Style="{StaticResource HudSliderCentered}"
+                                    Minimum="-100" Maximum="100"
+                                    Value="{Binding SelectedDevice.Balance, Mode=TwoWay, Delay=140}" />
+                            <TextBlock Grid.Column="2" Text="DIR" Style="{StaticResource HudCaption}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,16">
+                            <TextBlock Text="{Binding SelectedDevice.BalanceLabel}"
+                                       Style="{StaticResource HudValue}" Margin="0,0,16,0" />
+                            <TextBlock Text="{Binding SelectedDevice.SpreadLabel}"
+                                       Style="{StaticResource HudCaption}" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <ItemsControl ItemsSource="{Binding SelectedDevice.Channels}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="126" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="88" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Label}"
+                                                   Foreground="{DynamicResource HudText}" FontSize="12"
+                                                   VerticalAlignment="Center" />
+
+                                        <Slider Grid.Row="0" Grid.Column="1"
+                                                Style="{StaticResource HudSlider}"
+                                                Minimum="0" Maximum="100"
+                                                Value="{Binding Percent, Mode=TwoWay, Delay=140}" />
+
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding PercentLabel}"
+                                                   Style="{StaticResource HudValueDim}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+
+                                        <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding DecibelsLabel}"
+                                                   Style="{StaticResource HudValue}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+
+                                        <controls:AudioLevelMeter Grid.Row="1" Grid.Column="1"
+                                                                  Style="{StaticResource HudMeter}"
+                                                                  Amplitude="{Binding Peak, Mode=OneWay}"
+                                                                  Margin="0,3,0,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Uma régua para o grupo todo, alinhada com as barras acima -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="126" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="88" />
+                            </Grid.ColumnDefinitions>
+                            <controls:AudioLevelMeter Grid.Column="1"
+                                                      Style="{StaticResource HudScaleStrip}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Volume -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="VOLUME MESTRE" Style="{StaticResource HudSectionTitle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider Grid.Column="0" Style="{StaticResource HudSlider}"
+                                    Minimum="0" Maximum="100"
+                                    Value="{Binding SelectedDevice.MasterVolume, Mode=TwoWay, Delay=140}" />
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedDevice.MasterDecibelsLabel}"
+                                       Style="{StaticResource HudValue}" FontSize="14"
+                                       VerticalAlignment="Center" Margin="16,0,0,0" />
+                        </Grid>
+                        <Grid Margin="0,14,0,0">
+                            <CheckBox Style="{StaticResource HudSwitch}" Content="Mudo"
+                                      IsChecked="{Binding SelectedDevice.IsMuted, Mode=TwoWay}" />
+                            <TextBlock Text="{Binding SelectedDevice.RangeLabel}"
+                                       Style="{StaticResource HudCaption}" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Qualidade -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="QUALIDADE" Style="{StaticResource HudSectionTitle}" />
+                        <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
+                                  ItemsSource="{Binding SelectedDevice.Formats}"
+                                  SelectedItem="{Binding SelectedDevice.SelectedFormat, Mode=TwoWay}"
+                                  ToolTip="A lista mostra só o que o hardware realmente aceita, sondado em modo exclusivo. Trocar exige administrador e vale a partir da próxima inicialização do dispositivo.">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Style="{StaticResource HudCaption}" Margin="0,11,0,0"
+                                   Text="48 kHz é a taxa nativa de motores de jogo — casar com ela evita uma reamostragem no caminho." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Áudio espacial -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding IsOutputSelected, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="ÁUDIO ESPACIAL" Style="{StaticResource HudSectionTitle}" />
+                        <ComboBox Style="{StaticResource HudCombo}" Width="340" HorizontalAlignment="Left"
+                                  ItemsSource="{Binding SelectedDevice.SpatialFormats}"
+                                  SelectedItem="{Binding SelectedDevice.SelectedSpatialFormat, Mode=TwoWay}"
+                                  ToolTip="Para filmes, o Windows Sonic ajuda — a trilha vem em 5.1/7.1 e não traz HRTF próprio.">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Opacity="{Binding IsAvailable, Converter={StaticResource AvailabilityOpacity}}">
+                                        <TextBlock Text="{Binding Name}" />
+                                        <TextBlock Text="{Binding Requirement}" FontSize="10"
+                                                   Foreground="{DynamicResource HudWarn}"
+                                                   Visibility="{Binding IsAvailable, Converter={StaticResource InverseBoolToVisibility}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Style="{StaticResource HudCaption}" Margin="0,11,0,0"
+                                   Text="Para FPS, deixe desativado: o jogo já aplica HRTF próprio e empilhar virtualização borra a imagem." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Driver -->
+                <Border Style="{StaticResource HudCard}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="DRIVER E DISPOSITIVO" Style="{StaticResource HudSectionTitle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Descrição" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDevice.Driver.Description}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Fornecedor" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDevice.Driver.Provider}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Versão" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDevice.Driver.VersionLabel}" Style="{StaticResource HudValue}" Margin="0,0,0,6" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Data" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDevice.Driver.DateLabel}" Style="{StaticResource HudValueDim}" Margin="0,0,0,6" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Serviço / INF" Style="{StaticResource HudCaption}" Margin="0,0,20,6" />
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding SelectedDevice.Driver.Service}" Style="{StaticResource HudValueDim}" />
+                                <TextBlock Text=" · " Style="{StaticResource HudValueDim}" />
+                                <TextBlock Text="{Binding SelectedDevice.Driver.InfName}" Style="{StaticResource HudValueDim}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Instância" Style="{StaticResource HudCaption}" Margin="0,0,20,0" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedDevice.Driver.InstanceId}"
+                                       Style="{StaticResource HudValueDim}" FontSize="11"
+                                       Foreground="{DynamicResource HudTextFaint}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                            <Button Content="REINICIAR SERVIÇO" Style="{StaticResource HudButton}"
+                                    Margin="0,0,8,0" Command="{Binding RestartAudioServiceCommand}"
+                                    ToolTip="Aplica mudanças de formato e de áudio espacial. Exige administrador." />
+                            <Button Content="GERENCIADOR" Style="{StaticResource HudButton}"
+                                    Margin="0,0,8,0" Command="{Binding OpenDeviceManagerCommand}" />
+                            <Button Content="SOM DO WINDOWS" Style="{StaticResource HudButton}"
+                                    Margin="0,0,8,0" Command="{Binding OpenSoundSettingsCommand}" />
+                            <Button Content="PAINEL CLÁSSICO" Style="{StaticResource HudButton}"
+                                    Command="{Binding OpenLegacyPanelCommand}"
+                                    ToolTip="Onde vive o Microphone Boost, quando o driver oferece" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
