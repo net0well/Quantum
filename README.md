@@ -38,6 +38,9 @@ resto do que fica espalhado pelo painel do Windows.
 ## Índice
 
 - [Instalação](#instalação)
+  - [Com instalador](#com-instalador-recomendado)
+  - [Portátil](#portátil)
+  - [Compilar do código-fonte](#compilar-do-código-fonte)
 - [Como usar](#como-usar)
   - [Escolher o dispositivo](#escolher-o-dispositivo)
   - [Verificação do sistema](#verificação-do-sistema)
@@ -50,6 +53,7 @@ resto do que fica espalhado pelo painel do Windows.
   - [Driver e dispositivo](#driver-e-dispositivo)
   - [Sistema](#sistema)
   - [Aparência](#aparência)
+  - [Atualização](#atualização)
   - [Segundo plano](#segundo-plano)
 - [Quando precisa de administrador](#quando-precisa-de-administrador)
 - [Configuração recomendada para FPS](#configuração-recomendada-para-fps)
@@ -62,14 +66,35 @@ resto do que fica espalhado pelo painel do Windows.
 
 ## Instalação
 
-### Baixar pronto (recomendado)
+Cada release traz duas formas. Nenhuma exige .NET instalado.
+
+| | Para quem | Atualização |
+|---|---|---|
+| **`Quantum-Setup-vX.Y.Z.exe`** | Uso do dia a dia | **Automática.** O app avisa, mostra as notas e se atualiza sozinho |
+| **`Quantum-portable-vX.Y.Z.exe`** | Testar sem instalar, ou rodar de um pendrive | Só o aviso, com link para baixar a versão nova |
+
+### Com instalador (recomendado)
 
 1. Vá em [**Releases**](https://github.com/net0well/Quantum/releases/latest)
-2. Baixe `Quantum.exe`
+2. Baixe `Quantum-Setup-vX.Y.Z.exe`
 3. Execute
 
-Não instala nada, não escreve no registro do sistema, não exige .NET. As únicas
-coisas que ele grava ficam em `%APPDATA%\Quantum`.
+Instala em `%LocalAppData%\Quantum`, **sem pedir administrador** e sem tocar em
+`Program Files`. A partir daí toda versão nova chega sozinha: o app avisa, mostra
+o que mudou e atualiza com um clique — baixando só a diferença, não os 70 MB
+inteiros.
+
+### Portátil
+
+Baixe `Quantum-portable-vX.Y.Z.exe` e execute. Um arquivo só, não instala nada,
+não escreve no registro do sistema.
+
+A contrapartida é que ele **não se atualiza sozinho** — sem pasta de instalação
+não há para onde aplicar a atualização. Ele avisa quando sai versão nova e abre a
+página de downloads.
+
+Em ambos os casos, as únicas coisas que o Quantum grava ficam em
+`%APPDATA%\Quantum`: perfis, preferências e registro.
 
 > **Sobre o aviso do SmartScreen:** o executável não é assinado por certificado
 > digital pago, então o Windows mostra um aviso na primeira execução. Clique em
@@ -93,6 +118,19 @@ executável portátil:
 ```powershell
 .\publish.ps1
 ```
+
+Para gerar o instalador, o mesmo que o workflow de release faz:
+
+```powershell
+dotnet tool restore
+dotnet publish src\Quantum.App\Quantum.App.csproj -c Release -o publish-installer --runtime win-x64 --self-contained -p:PublishSingleFile=false
+dotnet vpk pack --packId Quantum --packVersion 1.0.0 --packDir publish-installer --mainExe Quantum.exe --outputDir releases
+```
+
+> O instalador é publicado **sem arquivo único** de propósito. O Velopack gera
+> atualizações delta comparando arquivo a arquivo, e um único blob de 70 MB muda
+> por inteiro a cada versão — o que anularia o delta. O portátil, que não se
+> atualiza sozinho, continua sendo arquivo único.
 
 ---
 
@@ -252,6 +290,20 @@ O tema claro não é o escuro invertido — num fundo claro os tons neon puros p
 contraste e viram borrão, então violeta e ciano descem de luminosidade até passarem
 em texto pequeno.
 
+### Atualização
+
+Quando sai versão nova, uma faixa aparece no topo com o número da versão e o que
+mudou — as notas da release, já limpas do Markdown.
+
+Na versão instalada o botão é **ATUALIZAR AGORA**: baixa a diferença, troca a
+versão e reinicia o app. Na portátil ele vira **ABRIR DOWNLOADS**, porque sem
+pasta de instalação não há o que atualizar. **DEPOIS** dispensa o aviso até a
+próxima verificação.
+
+Em **Ajustes → Versão** ficam a versão atual, a verificação manual e o
+interruptor de procurar ao abrir o app. Se preferir, desligue: nada é baixado
+sem você mandar, e uma falha de rede nunca atrapalha quem só quer mexer no volume.
+
 ### Segundo plano
 
 Fechar a janela manda o Quantum para a bandeja em vez de encerrar. Lá ele continua
@@ -328,25 +380,34 @@ Quantum/
 ├── Directory.Build.props          # TFM, nullable, avisos como erro
 ├── Directory.Packages.props       # versões centralizadas
 ├── global.json                    # SDK fixado
+├── .config/dotnet-tools.json      # vpk (Velopack) versionado junto do código
 ├── publish.ps1                    # gera o executável portátil
 ├── src/
 │   ├── Quantum.Audio/             # biblioteca — nenhuma dependência de UI
 │   │   ├── Interop/               # COM do Core Audio, PROPVARIANT, WAVEFORMAT
 │   │   ├── Models/                # AudioDeviceInfo, VolumeState, AudioResult...
 │   │   ├── Devices/               # enumeração, volume, canais, balanço, picos
+│   │   ├── Metering/              # escala em dB e balística do medidor
 │   │   ├── Quality/               # formatos suportados e formato padrão
 │   │   ├── Spatial/               # catálogo e seleção de áudio espacial
 │   │   ├── Drivers/               # driver via ramo PnP do registro
 │   │   ├── SystemAudio/           # ducking, mono, serviço de áudio, elevação
+│   │   ├── Storage/               # repositórios em disco (%APPDATA%\Quantum)
 │   │   ├── Health/                # verificação periódica
+│   │   │   └── Strategies/        # uma checagem por classe, com sufixo no nome
 │   │   └── Profiles/              # modelo, embutidos, persistência, aplicação
+│   │       └── Strategies/        # um passo do perfil por classe
 │   └── Quantum.App/               # WPF sobre WPF-UI, com tema neon próprio
-│       ├── Themes/Neon.xaml       # paleta, HUD, medidor segmentado, ícones
-│       ├── ViewModels/            # MVVM próprio, sem framework
-│       ├── Views/
-│       └── Services/              # bandeja, preferências, liberação de memória
+│       ├── Program.cs             # entrada: o Velopack roda antes da janela existir
+│       ├── Themes/                # Neon.xaml + paletas clara e escura trocáveis
+│       ├── Controls/              # medidor desenhado em OnRender
+│       ├── Converters/
+│       ├── Mvvm/                  # MVVM próprio, sem framework
+│       ├── ViewModels/
+│       ├── Views/Sections/        # uma tela por seção da barra lateral
+│       └── Services/              # bandeja, preferências, tema, atualização
 └── tests/
-    └── Quantum.Audio.Tests/       # xUnit v3 — 40 testes
+    └── Quantum.Audio.Tests/       # xUnit v3 — 90 testes
 ```
 
 `Quantum.Audio` não referencia nada de interface: dá para reaproveitar em linha de
@@ -356,7 +417,7 @@ comando, num serviço ou em outra UI.
 
 ```powershell
 dotnet build Quantum.slnx -c Release   # avisos são erros
-dotnet test                            # 40 testes
+dotnet test                            # 90 testes
 .\publish.ps1                          # executável portátil
 ```
 
@@ -368,6 +429,7 @@ dotnet test                            # 40 testes
 | Interface | WPF + [WPF-UI](https://github.com/lepoco/wpfui) | MAUI exigiria empacotamento MSIX para rodar em outra máquina, e a Core Audio API é só Windows — o cross-platform não agregaria nada |
 | MVVM | Próprio (~90 linhas) | O grafo é pequeno e fixo; um framework aqui só acrescentaria indireção |
 | Bandeja | `NotifyIcon` do WinForms | API de tray mais estável do Windows |
+| Atualização | [Velopack](https://velopack.io) | Instala em `%LocalAppData%` sem administrador e faz atualização delta; ClickOnce e MSIX exigiriam assinatura ou empacotamento |
 | Testes | xUnit v3 | — |
 
 Contribuições: veja [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -380,19 +442,27 @@ Três workflows, todos em `windows-latest` porque o projeto é WPF.
 
 ### `ci.yml` — a cada PR e push fora da main
 
-1. Restaura, compila em Release (**avisos são erros**) e roda os 40 testes
+1. Restaura, compila em Release (**avisos são erros**) e roda os 90 testes
 2. Publica o relatório TRX como artefato
 3. **Gera o executável portátil** — falhas de publicação single-file não aparecem em
    um build comum, e é melhor descobrir no PR do que na release
 4. Confere que o `.exe` saiu com tamanho plausível
+5. **Empacota o instalador com o Velopack** — o caminho dele é diferente do portátil
+   (sem arquivo único), e quebrar só na release seria descobrir tarde demais
 
 ### `release.yml` — a cada entrada na main
 
 1. Calcula a versão: `major.minor` vêm do `Directory.Build.props`, o patch é o número
    da execução — toda entrada na main gera uma versão nova e crescente
 2. Compila, testa e publica com essa versão gravada no binário
-3. Monta `Quantum.exe`, um `.zip` com README/licença/changelog e os checksums SHA-256
-4. Cria a release no GitHub com notas geradas a partir dos commits e PRs
+3. Gera as notas da versão a partir dos commits e PRs, **antes** de empacotar — as
+   mesmas notas vão para a release e para dentro do pacote, que é o que o app mostra
+   na faixa de atualização
+4. Publica duas vezes: portátil em arquivo único e instalador sem arquivo único,
+   depois empacota o instalador com o `vpk`
+5. Monta os artefatos — `Quantum-Setup-vX.Y.Z.exe`, `Quantum-portable-vX.Y.Z.exe`, o
+   feed de atualização do Velopack e os checksums SHA-256
+6. Cria a release no GitHub com essas notas
 
 Para entrar na main sem publicar, inclua `[skip release]` na mensagem do commit.
 Para mudar `major.minor`, edite `<Version>` no `Directory.Build.props`.
@@ -446,6 +516,8 @@ pretos — sumiam no fundo escuro. As geometrias em `Neon.xaml` herdam a cor do 
 - **Dolby Atmos e DTS:X são listados mas ficam inativos** sem o app correspondente da
   Microsoft Store instalado e licenciado.
 - **Mudança de formato só vale na próxima inicialização do endpoint.**
+- **A versão portátil não se atualiza sozinha.** Ela avisa e abre a página de
+  downloads; sem pasta de instalação não há para onde aplicar a atualização.
 - **Windows apenas.** A Core Audio API não existe em outros sistemas.
 
 ---

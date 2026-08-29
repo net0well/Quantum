@@ -76,7 +76,8 @@
                         <Button Content="ELEVAR" Style="{StaticResource HudButton}" Margin="0,0,8,0"
                                 Command="{Binding RestartElevatedCommand}"
                                 Visibility="{Binding ShowElevationBanner, Converter={StaticResource BoolToVisibility}}" />
-                        <Button Content="ATUALIZAR" Style="{StaticResource HudButton}"
+                        <Button Content="RECARREGAR" Style="{StaticResource HudButton}"
+                                ToolTip="Reler os dispositivos e o estado atual do Windows"
                                 Command="{Binding RefreshCommand}" />
                     </StackPanel>
                 </Grid>
