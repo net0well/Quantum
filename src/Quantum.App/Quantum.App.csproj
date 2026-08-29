@@ -9,18 +9,20 @@
     <AssemblyName>Quantum</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\quantum.ico</ApplicationIcon>
+    <!-- Entrada própria: o Velopack precisa rodar antes de a Application existir. -->
+    <StartupObject>Quantum.App.Program</StartupObject>
     <!-- WFO0003 pede para tirar o DPI do manifesto e usar a API do WinForms. Aqui quem
          desenha é o WPF, que precisa das entradas de DPI no manifesto. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <Description>Central de áudio do Windows: balanço por canal, qualidade, áudio espacial e perfis.</Description>
 
-    <!-- Publicação portátil: um único .exe que roda em qualquer Windows x64 -->
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishSingleFile>true</PublishSingleFile>
+    <SatelliteResourceLanguages>pt-BR;en</SatelliteResourceLanguages>
+
+    <!-- Publicação portátil fica em publish.ps1 e no workflow, não aqui: são
+         opções de publish, e fixá-las no csproj torna o projeto autocontido
+         até para build comum — o que impede o projeto de teste de referenciá-lo. -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <SatelliteResourceLanguages>pt-BR;en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -49,12 +51,17 @@
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Velopack" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Serilog.Sinks.Debug" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Quantum.Audio\Quantum.Audio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Quantum.Audio.Tests" />
   </ItemGroup>
 
   <ItemGroup>

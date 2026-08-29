@@ -8,6 +8,11 @@ workflow de release — toda entrada na `main` publica uma versão nova.
 
 ### Adicionado
 
+- **Instalador com atualização automática**, via Velopack. Instala em
+  `%LocalAppData%` sem pedir administrador e baixa só a diferença entre versões
+- Faixa de versão nova no topo do app, com as notas da release e opção de adiar
+- Seção Versão em Ajustes: versão atual, verificação manual e interruptor de
+  procurar ao abrir
 - Barra lateral com Painel, Saída, Entrada e Ajustes, no lugar da página única
   com rolagem
 - Medidores com escala em dB (−60 a 0), balística de medidor de pico, traço de
