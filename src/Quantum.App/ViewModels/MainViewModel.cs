@@ -99,9 +99,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Refresh();
 
         // Medidores: só rodam com a janela à mostra. Em background o custo cai a zero.
+        // Amostra a 30 Hz; quem desenha a 60 é o próprio medidor, interpolando pela
+        // balística. Metade das chamadas COM, sem perda visível de fluidez.
         _meterTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
-            Interval = TimeSpan.FromMilliseconds(66),
+            Interval = TimeSpan.FromMilliseconds(33),
         };
         _meterTimer.Tick += (_, _) => SelectedDevice?.UpdateMeters();
 

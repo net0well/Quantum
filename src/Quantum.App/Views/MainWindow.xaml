@@ -2,6 +2,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:controls="clr-namespace:Quantum.App.Controls"
                  xmlns:audio="clr-namespace:Quantum.Audio.Models;assembly=Quantum.Audio"
                  Title="Quantum"
                  Height="860" Width="1240" MinHeight="660" MinWidth="1040"
@@ -296,13 +297,14 @@
                                 <ItemsControl ItemsSource="{Binding SelectedDevice.Channels}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <ProgressBar Style="{StaticResource HudMeter}" Height="16"
-                                                         Margin="0,0,0,7"
-                                                         Value="{Binding PeakPercent, Mode=OneWay}" />
+                                            <controls:AudioLevelMeter Style="{StaticResource HudMeterTall}"
+                                                                      Margin="0,0,0,5"
+                                                                      Amplitude="{Binding Peak, Mode=OneWay}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,6,0,0"
+                                <controls:AudioLevelMeter Style="{StaticResource HudScaleStrip}" />
+                                <TextBlock Style="{StaticResource HudCaption}" Margin="0,10,0,0"
                                            Text="Fale normalmente: a barra deve ficar entre 60% e 80% nos picos. Encostando no fim, a voz distorce; muito baixa, o supressor de ruído do Discord come as palavras. O ganho extra (Microphone Boost) é um controle do driver do fabricante e não aparece aqui — se precisar dele, use o painel clássico." />
                             </StackPanel>
                         </Border>
@@ -373,14 +375,26 @@
                                                            Style="{StaticResource HudValue}"
                                                            HorizontalAlignment="Right" VerticalAlignment="Center" />
 
-                                                <ProgressBar Grid.Row="1" Grid.Column="1"
-                                                             Style="{StaticResource HudMeter}"
-                                                             Value="{Binding PeakPercent, Mode=OneWay}"
-                                                             Margin="0,3,0,0" />
+                                                <controls:AudioLevelMeter Grid.Row="1" Grid.Column="1"
+                                                                          Style="{StaticResource HudMeter}"
+                                                                          Amplitude="{Binding Peak, Mode=OneWay}"
+                                                                          Margin="0,3,0,0" />
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
+                                <!-- Uma régua para o grupo todo, alinhada com as barras acima -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="126" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="88" />
+                                    </Grid.ColumnDefinitions>
+                                    <controls:AudioLevelMeter Grid.Column="1"
+                                                              Style="{StaticResource HudScaleStrip}" />
+                                </Grid>
                             </StackPanel>
                         </Border>
 

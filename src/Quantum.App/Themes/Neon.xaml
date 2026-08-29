@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Quantum.App.Controls">
 
     <!-- ================= Paleta neon ================= -->
     <Color x:Key="NeonVioletColor">#FF8B5CFF</Color>
@@ -360,28 +361,33 @@
         </Setter>
     </Style>
 
-    <!-- ================= Medidor segmentado ================= -->
-    <Style x:Key="HudMeter" TargetType="ProgressBar">
-        <Setter Property="Height" Value="8" />
-        <Setter Property="Maximum" Value="100" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ProgressBar">
-                    <Grid>
-                        <Border Background="{StaticResource HudTrack}" CornerRadius="1"
-                                OpacityMask="{StaticResource SegmentMask}" />
-                        <Border ClipToBounds="True" CornerRadius="1">
-                            <Grid HorizontalAlignment="Left">
-                                <Rectangle x:Name="PART_Track" />
-                                <Rectangle x:Name="PART_Indicator"
-                                           Fill="{StaticResource NeonGradient}"
-                                           OpacityMask="{StaticResource SegmentMask}" />
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+    <!-- ================= Medidor de pico =================
+         Desenhado em OnRender, com escala em dB, balística e traço de pico.
+         As cores vêm do tema para acompanharem claro/escuro. -->
+    <Style x:Key="HudMeter" TargetType="{x:Type controls:AudioLevelMeter}">
+        <Setter Property="Height" Value="9" />
+        <Setter Property="TrackBrush" Value="{StaticResource HudTrack}" />
+        <Setter Property="NormalBrush" Value="{StaticResource NeonCyan}" />
+        <Setter Property="WarningBrush" Value="{StaticResource HudWarn}" />
+        <Setter Property="DangerBrush" Value="{StaticResource HudDanger}" />
+        <Setter Property="PeakBrush" Value="{StaticResource HudText}" />
+        <Setter Property="ScaleBrush" Value="{StaticResource HudTextFaint}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!-- Versão alta, para o nível de entrada do microfone -->
+    <Style x:Key="HudMeterTall" TargetType="{x:Type controls:AudioLevelMeter}"
+           BasedOn="{StaticResource HudMeter}">
+        <Setter Property="Height" Value="18" />
+    </Style>
+
+    <!-- Só a régua em dB: uma por grupo de medidores, em vez de repetir por canal -->
+    <Style x:Key="HudScaleStrip" TargetType="{x:Type controls:AudioLevelMeter}"
+           BasedOn="{StaticResource HudMeter}">
+        <Setter Property="Height" Value="14" />
+        <Setter Property="ShowBar" Value="False" />
+        <Setter Property="ShowScale" Value="True" />
+        <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
 
     <!-- ================= Barra de rolagem ================= -->
