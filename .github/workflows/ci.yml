@@ -58,7 +58,7 @@ jobs:
 
       - name: Publicar o relatório de testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: resultado-dos-testes
           path: TestResults/*.trx
