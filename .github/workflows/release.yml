@@ -187,7 +187,7 @@ jobs:
           Get-ChildItem artifacts | Format-Table Name, Length
 
       - name: Guardar os artefatos da execução
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quantum-v${{ steps.version.outputs.version }}
           path: artifacts/*
